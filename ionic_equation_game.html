@@ -1,0 +1,1871 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚗️ Ionic Equation Quest</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --team1: #ff6b9d;
+    --team2: #4ecdc4;
+    --team1-light: #ffe0ed;
+    --team2-light: #d4f5f3;
+    --gold: #ffd700;
+    --bg: #0f0e17;
+    --card: #1a1a2e;
+    --card2: #16213e;
+    --text: #fffffe;
+    --subtext: #a7a9be;
+    --tier1: #6bcb77;
+    --tier2: #ffd166;
+    --tier3: #f4a261;
+    --tier4: #e63946;
+    --radius: 16px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* Animated background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 20%, rgba(255,107,157,0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, rgba(78,205,196,0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 50%, rgba(255,215,0,0.03) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    text-align: center;
+    padding: 30px 20px 20px;
+    position: relative;
+  }
+  .header-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--team1), var(--team2));
+    color: white;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    padding: 6px 20px;
+    border-radius: 999px;
+    margin-bottom: 12px;
+  }
+  .header h1 {
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    background: linear-gradient(135deg, var(--team1), var(--gold), var(--team2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.1;
+    margin-bottom: 8px;
+  }
+  .header p {
+    color: var(--subtext);
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  /* ── COMPACT SCOREBAR ── */
+  .scorebar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(15,14,23,0.97);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    gap: 8px;
+  }
+  .scorebar-team {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+  }
+  .scorebar-team.right { flex-direction: row-reverse; }
+  .scorebar-name {
+    font-family: 'Fredoka One', cursive;
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 120px;
+  }
+  .scorebar-score {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.6rem;
+    line-height: 1;
+    min-width: 32px;
+    text-align: center;
+  }
+  .t1 .scorebar-name, .t1 .scorebar-score { color: var(--team1); }
+  .t2 .scorebar-name, .t2 .scorebar-score { color: var(--team2); }
+  .scorebar-team.active-team .scorebar-name { text-decoration: underline; }
+  .scorebar-center {
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .scorebar-vs {
+    font-family: 'Fredoka One', cursive;
+    font-size: 0.9rem;
+    color: var(--subtext);
+    display: block;
+  }
+  .scorebar-round {
+    font-size: 10px;
+    color: var(--subtext);
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .scorebar-dot {
+    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+    transition: background 0.3s;
+  }
+  .t1 .scorebar-dot { background: var(--team1); }
+  .t2 .scorebar-dot { background: var(--team2); }
+  .scorebar-team:not(.active-team) .scorebar-dot { opacity: 0.3; }
+
+  /* tier pills — hidden, kept for JS compatibility */
+  .tier-bar { display: none; }
+  .tier-pill { display: none; }
+  .tier1 { background: var(--tier1); color: #1a1a1a; }
+  .tier2 { background: var(--tier2); color: #1a1a1a; }
+  .tier3 { background: var(--tier3); color: #1a1a1a; }
+  .tier4 { background: var(--tier4); color: white; }
+
+  /* ── GAME CARD ── */
+  .game-card {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 10px 12px;
+    border: 1px solid rgba(255,255,255,0.06);
+    animation: slideIn 0.4s ease;
+    flex: 1;
+    overflow: hidden;
+  }
+  /* Two-column layout wrapper */
+  .game-layout {
+    display: grid;
+    grid-template-columns: 1fr 420px;
+    gap: 8px;
+    flex: 1;
+    overflow: hidden;
+    padding: 0 10px 8px;
+    min-height: 0;
+  }
+  .game-left {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    overflow: hidden;
+    min-height: 0;
+  }
+  .game-right {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    overflow: hidden;
+    min-height: 0;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .round-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .round-number {
+    font-family: 'Fredoka One', cursive;
+    font-size: 0.9rem;
+    color: var(--subtext);
+  }
+  .difficulty-stars {
+    font-size: 14px;
+    letter-spacing: 2px;
+  }
+  .reaction-type-badge {
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    background: rgba(255,255,255,0.08);
+    color: var(--subtext);
+  }
+
+  /* Molecular equation display */
+  .equation-display {
+    background: var(--card2);
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin: 8px 0;
+    border-left: 3px solid var(--gold);
+    font-size: clamp(12px, 1.8vw, 15px);
+    font-weight: 700;
+    line-height: 1.6;
+    font-family: 'Courier New', monospace;
+    color: #ffeaa7;
+    word-break: break-all;
+  }
+  .equation-display .eq-label {
+    font-family: 'Nunito', sans-serif;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gold);
+    display: block;
+    margin-bottom: 3px;
+  }
+
+  /* Stage tabs */
+  .stage-tabs {
+    display: flex;
+    gap: 5px;
+    margin: 6px 0 8px;
+    flex-wrap: wrap;
+  }
+  .stage-tab {
+    flex: 1;
+    min-width: 90px;
+    padding: 6px 8px;
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 2px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.04);
+    color: var(--subtext);
+    cursor: default;
+    text-align: center;
+    transition: all 0.3s;
+  }
+  .stage-tab.active-stage {
+    background: rgba(255,215,0,0.12);
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+  .stage-tab.completed-stage {
+    background: rgba(107,203,119,0.12);
+    border-color: var(--tier1);
+    color: var(--tier1);
+  }
+  .stage-tab.completed-stage::after { content: ' ✓'; }
+
+  /* Question area */
+  .question-label {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 4px;
+  }
+  .question-text {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--subtext);
+    margin-bottom: 8px;
+    line-height: 1.4;
+  }
+
+  /* Whose turn */
+  .whose-turn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 800;
+  }
+  .whose-turn.team1-turn { background: rgba(255,107,157,0.12); color: var(--team1); }
+  .whose-turn.team2-turn { background: rgba(78,205,196,0.12); color: var(--team2); }
+  .turn-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .team1-turn .turn-dot { background: var(--team1); }
+  .team2-turn .turn-dot { background: var(--team2); }
+
+  /* Input area */
+  .input-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+  .answer-input {
+    flex: 1;
+    min-width: 200px;
+    background: rgba(255,255,255,0.06);
+    border: 2px solid rgba(255,255,255,0.12);
+    border-radius: 12px;
+    padding: 14px 18px;
+    font-size: 15px;
+    font-family: 'Courier New', monospace;
+    color: var(--text);
+    outline: none;
+    transition: all 0.3s;
+  }
+  .answer-input:focus { border-color: var(--gold); background: rgba(255,215,0,0.05); }
+  .answer-input::placeholder { color: rgba(255,255,255,0.25); font-family: 'Nunito', sans-serif; }
+
+  .btn {
+    padding: 14px 24px;
+    border-radius: 12px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1rem;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    letter-spacing: 1px;
+    white-space: nowrap;
+  }
+  .btn:hover { transform: translateY(-2px); }
+  .btn:active { transform: translateY(0); }
+  .btn-submit { background: linear-gradient(135deg, var(--gold), #ffaa00); color: #1a1a1a; }
+  .btn-hint { background: rgba(255,255,255,0.08); color: var(--subtext); font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 800; }
+  .btn-next { background: linear-gradient(135deg, var(--team2), #38a89d); color: white; width: 100%; margin-top: 10px; font-size: 1.1rem; }
+  .btn-show-answer { background: rgba(255,255,255,0.06); color: var(--subtext); font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 700; border: 1px solid rgba(255,255,255,0.1); }
+
+  /* Feedback */
+  .feedback {
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    display: none;
+    animation: popIn 0.3s ease;
+  }
+  @keyframes popIn {
+    0% { transform: scale(0.95); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .feedback.correct { background: rgba(107,203,119,0.15); border: 1px solid var(--tier1); color: var(--tier1); }
+  .feedback.wrong { background: rgba(230,57,70,0.15); border: 1px solid var(--tier4); color: #ff8a95; }
+  .feedback.info { background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.3); color: #ffeaa7; }
+
+  /* Answer reveal */
+  .answer-reveal {
+    background: var(--card2);
+    border-radius: 10px;
+    padding: 8px 14px;
+    margin-bottom: 6px;
+    display: none;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    color: #ffeaa7;
+    border-left: 3px solid var(--tier1);
+  }
+  .answer-reveal .reveal-label {
+    font-family: 'Nunito', sans-serif;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: var(--tier1);
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  /* Points awarded */
+  .points-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    background: linear-gradient(135deg, var(--gold), #ffaa00);
+    color: #1a1a1a;
+    font-family: 'Fredoka One', cursive;
+    font-size: 3rem;
+    padding: 30px 50px;
+    border-radius: 24px;
+    z-index: 1000;
+    pointer-events: none;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    text-align: center;
+  }
+  .points-popup.show { transform: translate(-50%, -50%) scale(1); }
+  .points-popup .points-sub { font-size: 1rem; font-family: 'Nunito', sans-serif; font-weight: 800; }
+
+  /* Hint box */
+  .hint-box {
+    background: rgba(255,215,0,0.06);
+    border: 1px solid rgba(255,215,0,0.2);
+    border-radius: 8px;
+    padding: 7px 12px;
+    font-size: 12px;
+    color: #ffeaa7;
+    margin-bottom: 6px;
+    display: none;
+  }
+  .hint-box .hint-label {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: var(--gold);
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  /* Attempt tracker */
+  .attempt-dots {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 6px;
+    align-items: center;
+  }
+  .attempt-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    transition: background 0.3s;
+  }
+  .attempt-dot.used { background: var(--tier4); }
+  .attempt-dots span { font-size: 11px; color: var(--subtext); font-weight: 700; margin-left: 4px; }
+
+  /* ── GAME OVER ── */
+  .game-over {
+    display: none;
+    text-align: center;
+    padding: 60px 30px;
+    animation: slideIn 0.5s ease;
+  }
+  .game-over h2 {
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(2rem, 6vw, 4rem);
+    background: linear-gradient(135deg, var(--gold), var(--team1));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 20px;
+  }
+  .final-scores {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin: 30px 0;
+    flex-wrap: wrap;
+  }
+  .final-score-card {
+    background: var(--card);
+    border-radius: 20px;
+    padding: 30px 40px;
+    min-width: 180px;
+    border: 3px solid transparent;
+  }
+  .final-score-card.winner { animation: pulse 1s ease infinite alternate; }
+  .final-score-card.team1-card { border-color: var(--team1); }
+  .final-score-card.team2-card { border-color: var(--team2); }
+  @keyframes pulse {
+    from { box-shadow: 0 0 20px rgba(255,215,0,0.2); }
+    to { box-shadow: 0 0 40px rgba(255,215,0,0.5); }
+  }
+  .winner-crown { font-size: 2rem; margin-bottom: 8px; }
+  .btn-restart {
+    background: linear-gradient(135deg, var(--team1), var(--team2));
+    color: white;
+    padding: 16px 40px;
+    font-size: 1.2rem;
+    border-radius: 16px;
+    margin-top: 20px;
+  }
+
+  /* Huddle timer */
+  .huddle-timer {
+    display: none;
+    background: rgba(255,166,97,0.1);
+    border: 1px solid var(--tier3);
+    border-radius: 12px;
+    padding: 12px 18px;
+    margin-bottom: 12px;
+    font-size: 14px;
+    color: var(--tier3);
+    font-weight: 700;
+    text-align: center;
+  }
+  .huddle-count { font-family: 'Fredoka One', cursive; font-size: 2rem; display: block; }
+
+  /* Setup screen */
+  .setup-screen {
+    max-width: 500px;
+    margin: 40px auto;
+    text-align: center;
+    padding: 40px;
+    background: var(--card);
+    border-radius: 24px;
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  .setup-screen h2 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.8rem;
+    margin-bottom: 8px;
+    color: var(--gold);
+  }
+  .setup-screen p { color: var(--subtext); margin-bottom: 28px; font-size: 14px; }
+  .team-inputs { display: flex; flex-direction: column; gap: 14px; margin-bottom: 24px; }
+  .team-input-group { display: flex; align-items: center; gap: 12px; }
+  .team-input-group label { font-weight: 800; font-size: 13px; width: 80px; text-align: right; }
+  .team-input-group label.t1 { color: var(--team1); }
+  .team-input-group label.t2 { color: var(--team2); }
+  .team-name-input {
+    flex: 1;
+    background: rgba(255,255,255,0.06);
+    border: 2px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 14px;
+    color: var(--text);
+    outline: none;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+    transition: border-color 0.3s;
+  }
+  .team-name-input:focus { border-color: var(--gold); }
+  .rounds-select-group { margin-bottom: 24px; }
+  .rounds-select-group label { display: block; font-size: 13px; font-weight: 800; color: var(--subtext); margin-bottom: 10px; }
+  .rounds-btns { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .rounds-btn {
+    padding: 8px 18px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 800;
+    border: 2px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.04);
+    color: var(--subtext);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .rounds-btn.selected { border-color: var(--gold); background: rgba(255,215,0,0.1); color: var(--gold); }
+  .btn-start {
+    background: linear-gradient(135deg, var(--team1), var(--team2));
+    color: white;
+    padding: 16px 40px;
+    font-size: 1.2rem;
+    border-radius: 16px;
+    width: 100%;
+  }
+
+  /* Confetti particles */
+  .confetti-container {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 999;
+    overflow: hidden;
+  }
+  .confetti-piece {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    top: -20px;
+    animation: confettiFall linear forwards;
+    border-radius: 2px;
+  }
+  @keyframes confettiFall {
+    0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+  }
+
+  .progress-bar-wrap {
+    background: rgba(255,255,255,0.06);
+    border-radius: 999px;
+    height: 4px;
+    margin-bottom: 4px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--team1), var(--gold), var(--team2));
+    border-radius: 999px;
+    transition: width 0.5s ease;
+  }
+
+  sub, sup { font-size: 0.7em; }
+
+  /* ── PERIODIC TABLE RIGHT COLUMN ── */
+  .pt-panel {
+    background: var(--card2);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 10px;
+    padding: 6px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow: hidden;
+    flex: 1;
+    min-height: 0;
+  }
+  .pt-grid {
+    display: grid;
+    grid-template-columns: repeat(18, 1fr);
+    gap: 1.5px;
+    flex: 1;
+    min-height: 0;
+  }
+  .pt-cell {
+    border-radius: 3px;
+    font-size: clamp(5px, 1.1vw, 11px);
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.1s;
+    border: 1px solid rgba(255,255,255,0.06);
+    min-width: 0;
+    min-height: 0;
+    color: #fff;
+    line-height: 1;
+  }
+  .pt-cell:hover { transform: scale(1.25); z-index: 10; position: relative; box-shadow: 0 0 8px rgba(255,215,0,0.5); }
+  .pt-cell:active { transform: scale(0.9); }
+  .pt-cell.empty { background: transparent; border: none; cursor: default; pointer-events: none; }
+  .pt-cell.alkali    { background: #e63946; }
+  .pt-cell.alkaline  { background: #f4a261; }
+  .pt-cell.transition{ background: #457b9d; }
+  .pt-cell.post      { background: #2a9d8f; }
+  .pt-cell.metalloid { background: #8338ec; }
+  .pt-cell.nonmetal  { background: #3a7d44; }
+  .pt-cell.halogen   { background: #e9c46a; color: #1a1a1a; }
+  .pt-cell.noble     { background: #6d6875; }
+  .pt-cell.lanthanide{ background: #a8dadc; color: #1a1a1a; }
+  .pt-cell.actinide  { background: #457b9d; opacity:0.7; }
+  .symbol-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-bottom: 6px;
+  }
+  .sym-btn {
+    padding: 3px 6px;
+    border-radius: 5px;
+    font-size: 11px;
+    font-weight: 800;
+    cursor: pointer;
+    border: none;
+    transition: transform 0.1s, opacity 0.1s;
+    line-height: 1;
+    font-family: 'Nunito', sans-serif;
+  }
+  .sym-btn:active { transform: scale(0.92); }
+  .sym-btn.charge  { background: rgba(255,107,157,0.2); color: var(--team1); border: 1px solid rgba(255,107,157,0.3); }
+  .sym-btn.state   { background: rgba(78,205,196,0.2); color: var(--team2); border: 1px solid rgba(78,205,196,0.3); }
+  .sym-btn.arrow   { background: rgba(255,215,0,0.2); color: var(--gold); border: 1px solid rgba(255,215,0,0.3); font-size:15px; }
+  .sym-btn.control { background: rgba(255,255,255,0.08); color: var(--subtext); border: 1px solid rgba(255,255,255,0.1); }
+  .sym-btn.sub-num { background: rgba(167,169,190,0.15); color: #c8c9de; border: 1px solid rgba(255,255,255,0.08); }
+  .sym-bar-label {
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--subtext);
+    margin-bottom: 4px;
+  }
+</style>
+</head>
+<body>
+
+<div class="confetti-container" id="confettiContainer"></div>
+<div class="points-popup" id="pointsPopup"></div>
+
+<div class="container">
+
+  <!-- SETUP SCREEN -->
+  <div id="setupScreen">
+    <div class="header">
+      <div class="header-badge">⚗️ Chemistry Game</div>
+      <h1>Ionic Equation Quest</h1>
+      <p>3-Stage Team Challenge • 6092 Syllabus Aligned</p>
+    </div>
+    <div class="setup-screen">
+      <h2>⚗️ Set Up Teams</h2>
+      <p>Enter team names and choose how many rounds to play</p>
+      <div class="team-inputs">
+        <div class="team-input-group">
+          <label class="t1">🔴 Team 1</label>
+          <input class="team-name-input" id="team1Name" type="text" placeholder="Team Hydrogen" value="Team 1" maxlength="18">
+        </div>
+        <div class="team-input-group">
+          <label class="t2">🔵 Team 2</label>
+          <input class="team-name-input" id="team2Name" type="text" placeholder="Team Oxygen" value="Team 2" maxlength="18">
+        </div>
+      </div>
+      <div class="rounds-select-group">
+        <label>Number of Rounds</label>
+        <div class="rounds-btns">
+          <button class="rounds-btn" onclick="selectRounds(10)">10</button>
+          <button class="rounds-btn" onclick="selectRounds(20)">20</button>
+          <button class="rounds-btn selected" onclick="selectRounds(40)">All 40</button>
+        </div>
+      </div>
+      <button class="btn btn-start" onclick="startGame()">🚀 Start Quest!</button>
+    </div>
+  </div>
+
+  <!-- GAME SCREEN -->
+  <div id="gameScreen" style="display:none;">
+
+    <!-- Compact sticky scorebar -->
+    <div class="scorebar">
+      <div class="scorebar-team t1" id="team1Card">
+        <div class="scorebar-dot"></div>
+        <div class="scorebar-name" id="team1Display">Team 1</div>
+        <div class="scorebar-score" id="score1">0</div>
+      </div>
+      <div class="scorebar-center">
+        <span class="scorebar-vs">⚗️ VS</span>
+        <div class="scorebar-round" id="roundInfo">Round 1 / 40</div>
+      </div>
+      <div class="scorebar-team t2 right" id="team2Card">
+        <div class="scorebar-dot"></div>
+        <div class="scorebar-name" id="team2Display">Team 2</div>
+        <div class="scorebar-score" id="score2">0</div>
+      </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-bar-wrap" style="margin:0 10px 2px;">
+      <div class="progress-bar-fill" id="progressBar" style="width:0%"></div>
+    </div>
+
+    <!-- Hidden tier pills for JS -->
+    <div class="tier-bar">
+      <div class="tier-pill tier1" id="tier1pill"></div>
+      <div class="tier-pill tier2" id="tier2pill"></div>
+      <div class="tier-pill tier3" id="tier3pill"></div>
+      <div class="tier-pill tier4" id="tier4pill"></div>
+    </div>
+
+    <!-- TWO COLUMN LAYOUT -->
+    <div class="game-layout" id="gameCard">
+
+      <!-- LEFT: Game content -->
+      <div class="game-left">
+
+        <!-- Round header -->
+        <div class="round-header" style="margin-bottom:0;">
+          <span class="round-number" id="roundNum">Round 1</span>
+          <span class="reaction-type-badge" id="reactionTypeBadge">Acid + Alkali</span>
+          <span class="difficulty-stars" id="diffStars">⭐</span>
+        </div>
+
+        <!-- Chemical Equation -->
+        <div class="equation-display" style="margin:0;">
+          <span class="eq-label">Chemical Equation</span>
+          <span id="molecularEq"></span>
+        </div>
+
+        <!-- Previous Stage Answers -->
+        <div id="prevAnswersBox" style="display:none;">
+          <div id="prevAnswer1" style="display:none;background:rgba(107,203,119,0.08);border-left:3px solid #6bcb77;border-radius:8px;padding:6px 12px;margin-bottom:4px;font-size:12px;">
+            <span style="display:block;font-size:9px;font-weight:800;letter-spacing:2px;color:#6bcb77;margin-bottom:2px;">STAGE 1 — FULL IONIC EQUATION</span>
+            <span id="prevAns1Text" style="font-family:Courier New,monospace;color:#ffeaa7;font-size:11px;"></span>
+          </div>
+          <div id="prevAnswer2" style="display:none;background:rgba(107,203,119,0.08);border-left:3px solid #6bcb77;border-radius:8px;padding:6px 12px;font-size:12px;">
+            <span style="display:block;font-size:9px;font-weight:800;letter-spacing:2px;color:#6bcb77;margin-bottom:2px;">STAGE 2 — SPECTATOR IONS</span>
+            <span id="prevAns2Text" style="font-family:Courier New,monospace;color:#ffeaa7;font-size:11px;"></span>
+          </div>
+        </div>
+
+        <!-- Stage Tabs -->
+        <div class="stage-tabs" style="margin:0;">
+          <div class="stage-tab active-stage" id="stageTab1">Stage 1: Split It!</div>
+          <div class="stage-tab" id="stageTab2">Stage 2: Spot Spectators!</div>
+          <div class="stage-tab" id="stageTab3">Stage 3: Net It!</div>
+        </div>
+
+        <!-- Huddle Timer -->
+        <div class="huddle-timer" id="huddleTimer">
+          🤝 Team Huddle! <span class="huddle-count" id="huddleCount">60</span>s to discuss
+        </div>
+
+        <!-- Whose Turn -->
+        <div class="whose-turn" id="whoseTurn" style="margin-bottom:4px;">
+          <span class="turn-dot"></span>
+          <span id="turnText">Team 1's turn!</span>
+        </div>
+
+        <!-- Question -->
+        <div class="question-label" id="questionLabel">STAGE 1 — SPLIT IT!</div>
+        <div class="question-text" id="questionText"></div>
+
+        <!-- Attempt dots -->
+        <div class="attempt-dots" style="margin-bottom:4px;">
+          <div class="attempt-dot" id="dot1"></div>
+          <div class="attempt-dot" id="dot2"></div>
+          <span>attempts remaining</span>
+        </div>
+
+        <!-- Hint box -->
+        <div class="hint-box" id="hintBox">
+          <span class="hint-label">💡 HINT</span>
+          <span id="hintText"></span>
+        </div>
+
+        <!-- Input -->
+        <div class="input-group" style="margin-bottom:4px;">
+          <input class="answer-input" id="answerInput" type="text" placeholder="Tap periodic table or type here..." autocomplete="off" autocorrect="off" spellcheck="false">
+          <button class="btn btn-submit" onclick="checkAnswer()" id="submitBtn">Check ✓</button>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
+          <button class="btn btn-hint" id="hintBtn" onclick="showHint()" style="display:none;">💡 Hint</button>
+          <button class="btn btn-show-answer" id="showAnswerBtn" onclick="revealAnswer()" style="display:none;">Show Answer</button>
+        </div>
+
+        <!-- Feedback -->
+        <div class="feedback" id="feedbackBox"></div>
+
+        <!-- Answer reveal -->
+        <div class="answer-reveal" id="answerReveal">
+          <span class="reveal-label">✅ CORRECT ANSWER</span>
+          <span id="revealText"></span>
+        </div>
+
+        <!-- Next button -->
+        <button class="btn btn-next" id="nextBtn" onclick="nextStage()" style="display:none;">Next Stage →</button>
+
+      </div><!-- end game-left -->
+
+      <!-- RIGHT: Periodic table + symbol buttons -->
+      <div class="game-right">
+        <div class="pt-panel">
+          <div style="font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--gold);margin-bottom:3px;">🔬 Periodic Table</div>
+          <div class="pt-grid" id="ptGrid"></div>
+
+          <!-- Symbol rows -->
+          <div style="display:flex;flex-wrap:wrap;gap:3px;align-items:center;">
+            <span style="font-size:8px;color:var(--subtext);font-weight:800;">Sub:</span>
+            <button class="sym-btn sub-num" onclick="insertSym('2')">₂</button>
+            <button class="sym-btn sub-num" onclick="insertSym('3')">₃</button>
+            <button class="sym-btn sub-num" onclick="insertSym('4')">₄</button>
+            <button class="sym-btn sub-num" onclick="insertSym('6')">₆</button>
+            <button class="sym-btn sub-num" onclick="insertSym('7')">₇</button>
+            <span style="color:rgba(255,255,255,0.2);margin:0 2px;">|</span>
+            <button class="sym-btn charge" onclick="insertSym('+')">⁺</button>
+            <button class="sym-btn charge" onclick="insertSym('-')">⁻</button>
+            <button class="sym-btn charge" onclick="insertSym('2+')">²⁺</button>
+            <button class="sym-btn charge" onclick="insertSym('2-')">²⁻</button>
+            <button class="sym-btn charge" onclick="insertSym('3+')">³⁺</button>
+            <button class="sym-btn charge" onclick="insertSym('3-')">³⁻</button>
+            <button class="sym-btn arrow" onclick="insertSym(' -> ')">→</button>
+            <button class="sym-btn control" onclick="insertSym(' + ')">＋</button>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:3px;align-items:center;">
+            <span style="font-size:8px;color:var(--subtext);font-weight:800;">State:</span>
+            <button class="sym-btn state" onclick="insertSym('(aq)')">(aq)</button>
+            <button class="sym-btn state" onclick="insertSym('(s)')">(s)</button>
+            <button class="sym-btn state" onclick="insertSym('(l)')">(l)</button>
+            <button class="sym-btn state" onclick="insertSym('(g)')">(g)</button>
+            <button class="sym-btn control" onclick="backspaceInput()">⌫</button>
+            <button class="sym-btn control" onclick="clearInput()">🗑</button>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:3px;align-items:center;">
+            <span style="font-size:8px;color:var(--subtext);font-weight:800;">Ions:</span>
+            <button class="sym-btn" style="background:rgba(138,180,248,0.18);color:#8ab4f8;border:1px solid rgba(138,180,248,0.3);" onclick="insertSym('OH-')">OH⁻</button>
+            <button class="sym-btn" style="background:rgba(138,180,248,0.18);color:#8ab4f8;border:1px solid rgba(138,180,248,0.3);" onclick="insertSym('SO42-')">SO₄²⁻</button>
+            <button class="sym-btn" style="background:rgba(138,180,248,0.18);color:#8ab4f8;border:1px solid rgba(138,180,248,0.3);" onclick="insertSym('NO3-')">NO₃⁻</button>
+            <button class="sym-btn" style="background:rgba(138,180,248,0.18);color:#8ab4f8;border:1px solid rgba(138,180,248,0.3);" onclick="insertSym('CO32-')">CO₃²⁻</button>
+            <button class="sym-btn" style="background:rgba(138,180,248,0.18);color:#8ab4f8;border:1px solid rgba(138,180,248,0.3);" onclick="insertSym('NH4+')">NH₄⁺</button>
+            <button class="sym-btn" style="background:rgba(138,180,248,0.18);color:#8ab4f8;border:1px solid rgba(138,180,248,0.3);" onclick="insertSym('PO43-')">PO₄³⁻</button>
+            <button class="sym-btn" style="background:rgba(138,180,248,0.18);color:#8ab4f8;border:1px solid rgba(138,180,248,0.3);" onclick="insertSym('HCO3-')">HCO₃⁻</button>
+            <button class="sym-btn" style="background:rgba(138,180,248,0.18);color:#8ab4f8;border:1px solid rgba(138,180,248,0.3);" onclick="insertSym('MnO4-')">MnO₄⁻</button>
+          </div>
+        </div>
+      </div><!-- end game-right -->
+
+    </div><!-- end game-layout -->
+
+  </div>
+
+  <!-- GAME OVER -->
+  <div class="game-over" id="gameOver">
+    <div style="font-size:4rem;margin-bottom:16px;">🏆</div>
+    <h2 id="winnerText">Team 1 Wins!</h2>
+    <p style="color:var(--subtext);margin-bottom:10px;">Great work, chemists! Here are the final scores:</p>
+    <div class="final-scores">
+      <div class="final-score-card team1-card" id="finalCard1">
+        <div class="winner-crown" id="crown1"></div>
+        <div style="color:var(--team1);font-weight:800;font-size:13px;letter-spacing:2px;text-transform:uppercase;" id="finalName1">Team 1</div>
+        <div style="font-family:'Fredoka One',cursive;font-size:4rem;color:var(--team1);" id="finalScore1">0</div>
+        <div style="font-size:12px;color:var(--subtext);">points</div>
+      </div>
+      <div class="final-score-card team2-card" id="finalCard2">
+        <div class="winner-crown" id="crown2"></div>
+        <div style="color:var(--team2);font-weight:800;font-size:13px;letter-spacing:2px;text-transform:uppercase;" id="finalName2">Team 2</div>
+        <div style="font-family:'Fredoka One',cursive;font-size:4rem;color:var(--team2);" id="finalScore2">0</div>
+        <div style="font-size:12px;color:var(--subtext);">points</div>
+      </div>
+    </div>
+    <button class="btn btn-restart" onclick="restartGame()">🔄 Play Again</button>
+  </div>
+
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// QUESTION BANK — All 40 Questions, 3 Stages
+// ─────────────────────────────────────────────
+const questions = [
+  // TIER 1 — Acid + Alkali (Rounds 1–8) ⭐–⭐⭐
+  {
+    molecular: "HCl(aq) + NaOH(aq) → NaCl(aq) + H₂O(l)",
+    type: "Acid + Alkali", tier: 1, stars: "⭐",
+    stage1: { q: "Write the full ionic equation (split all aqueous ionic compounds into ions).", a: "H⁺(aq) + Cl⁻(aq) + Na⁺(aq) + OH⁻(aq) → Na⁺(aq) + Cl⁻(aq) + H₂O(l)", hint: "NaOH, HCl and NaCl are all aqueous ionic — split them. Water stays as H₂O(l)." },
+    stage2: { q: "Identify the spectator ions (ions that appear unchanged on both sides).", a: "Na⁺, Cl⁻", hint: "Look for ions that appear on BOTH sides of the full ionic equation unchanged." },
+    stage3: { q: "Write the net ionic equation (remove spectator ions).", a: "H⁺(aq) + OH⁻(aq) → H₂O(l)", hint: "After removing Na⁺ and Cl⁻, what remains?" }
+  },
+  {
+    molecular: "HCl(aq) + KOH(aq) → KCl(aq) + H₂O(l)",
+    type: "Acid + Alkali", tier: 1, stars: "⭐",
+    stage1: { q: "Write the full ionic equation.", a: "H⁺(aq) + Cl⁻(aq) + K⁺(aq) + OH⁻(aq) → K⁺(aq) + Cl⁻(aq) + H₂O(l)", hint: "All aqueous ionic compounds split. Water is covalent — do not split it." },
+    stage2: { q: "Identify the spectator ions.", a: "K⁺, Cl⁻", hint: "Which ions appear on both sides unchanged?" },
+    stage3: { q: "Write the net ionic equation.", a: "H⁺(aq) + OH⁻(aq) → H₂O(l)", hint: "The net equation for acid + alkali is always the same!" }
+  },
+  {
+    molecular: "HNO₃(aq) + NaOH(aq) → NaNO₃(aq) + H₂O(l)",
+    type: "Acid + Alkali", tier: 1, stars: "⭐",
+    stage1: { q: "Write the full ionic equation.", a: "H⁺(aq) + NO₃⁻(aq) + Na⁺(aq) + OH⁻(aq) → Na⁺(aq) + NO₃⁻(aq) + H₂O(l)", hint: "HNO₃, NaOH, and NaNO₃ are all aqueous ionic — split them all." },
+    stage2: { q: "Identify the spectator ions.", a: "Na⁺, NO₃⁻", hint: "Look for ions unchanged on both sides." },
+    stage3: { q: "Write the net ionic equation.", a: "H⁺(aq) + OH⁻(aq) → H₂O(l)", hint: "The acid-alkali net equation!" }
+  },
+  {
+    molecular: "HNO₃(aq) + KOH(aq) → KNO₃(aq) + H₂O(l)",
+    type: "Acid + Alkali", tier: 1, stars: "⭐",
+    stage1: { q: "Write the full ionic equation.", a: "H⁺(aq) + NO₃⁻(aq) + K⁺(aq) + OH⁻(aq) → K⁺(aq) + NO₃⁻(aq) + H₂O(l)", hint: "Split all three aqueous ionic compounds. Water stays whole." },
+    stage2: { q: "Identify the spectator ions.", a: "K⁺, NO₃⁻", hint: "Which ions are unchanged on both sides?" },
+    stage3: { q: "Write the net ionic equation.", a: "H⁺(aq) + OH⁻(aq) → H₂O(l)", hint: "Acid + alkali always gives the same net equation." }
+  },
+  {
+    molecular: "H₂SO₄(aq) + 2NaOH(aq) → Na₂SO₄(aq) + 2H₂O(l)",
+    type: "Acid + Alkali", tier: 1, stars: "⭐⭐",
+    stage1: { q: "Write the full ionic equation. Watch the coefficients!", a: "2H⁺(aq) + SO₄²⁻(aq) + 2Na⁺(aq) + 2OH⁻(aq) → 2Na⁺(aq) + SO₄²⁻(aq) + 2H₂O(l)", hint: "H₂SO₄ gives 2H⁺ and 1SO₄²⁻. NaOH gives Na⁺ and OH⁻ (×2). Na₂SO₄ gives 2Na⁺ and SO₄²⁻." },
+    stage2: { q: "Identify the spectator ions.", a: "Na⁺, SO₄²⁻", hint: "Both Na⁺ and SO₄²⁻ appear unchanged on both sides." },
+    stage3: { q: "Write the net ionic equation.", a: "H⁺(aq) + OH⁻(aq) → H₂O(l)", hint: "The net equation simplifies to the same acid-alkali equation." }
+  },
+  {
+    molecular: "H₂SO₄(aq) + 2KOH(aq) → K₂SO₄(aq) + 2H₂O(l)",
+    type: "Acid + Alkali", tier: 1, stars: "⭐⭐",
+    stage1: { q: "Write the full ionic equation.", a: "2H⁺(aq) + SO₄²⁻(aq) + 2K⁺(aq) + 2OH⁻(aq) → 2K⁺(aq) + SO₄²⁻(aq) + 2H₂O(l)", hint: "H₂SO₄ → 2H⁺ + SO₄²⁻. KOH → K⁺ + OH⁻ (×2)." },
+    stage2: { q: "Identify the spectator ions.", a: "K⁺, SO₄²⁻", hint: "K⁺ and SO₄²⁻ appear unchanged on both sides." },
+    stage3: { q: "Write the net ionic equation.", a: "H⁺(aq) + OH⁻(aq) → H₂O(l)", hint: "Cancel spectators and simplify." }
+  },
+  {
+    molecular: "2HCl(aq) + Ca(OH)₂(aq) → CaCl₂(aq) + 2H₂O(l)",
+    type: "Acid + Alkali", tier: 1, stars: "⭐⭐",
+    stage1: { q: "Write the full ionic equation.", a: "2H⁺(aq) + 2Cl⁻(aq) + Ca²⁺(aq) + 2OH⁻(aq) → Ca²⁺(aq) + 2Cl⁻(aq) + 2H₂O(l)", hint: "Ca(OH)₂ splits into Ca²⁺ and 2OH⁻. CaCl₂ splits into Ca²⁺ and 2Cl⁻." },
+    stage2: { q: "Identify the spectator ions.", a: "Ca²⁺, Cl⁻", hint: "Ca²⁺ and Cl⁻ are unchanged on both sides." },
+    stage3: { q: "Write the net ionic equation.", a: "H⁺(aq) + OH⁻(aq) → H₂O(l)", hint: "The classic neutralisation net equation." }
+  },
+  {
+    molecular: "2HNO₃(aq) + Ca(OH)₂(aq) → Ca(NO₃)₂(aq) + 2H₂O(l)",
+    type: "Acid + Alkali", tier: 1, stars: "⭐⭐",
+    stage1: { q: "Write the full ionic equation.", a: "2H⁺(aq) + 2NO₃⁻(aq) + Ca²⁺(aq) + 2OH⁻(aq) → Ca²⁺(aq) + 2NO₃⁻(aq) + 2H₂O(l)", hint: "Ca(NO₃)₂ splits into Ca²⁺ and 2NO₃⁻." },
+    stage2: { q: "Identify the spectator ions.", a: "Ca²⁺, NO₃⁻", hint: "Ca²⁺ and NO₃⁻ are on both sides unchanged." },
+    stage3: { q: "Write the net ionic equation.", a: "H⁺(aq) + OH⁻(aq) → H₂O(l)", hint: "Same net equation for all strong acid + alkali reactions!" }
+  },
+
+  // TIER 2 — Metal Displacement + Acid + Carbonate (9–18) ⭐⭐
+  {
+    molecular: "Zn(s) + 2HCl(aq) → ZnCl₂(aq) + H₂(g)",
+    type: "Metal Displacement", tier: 2, stars: "⭐⭐",
+    stage1: { q: "Write the full ionic equation. Remember: Zn is a solid metal — do NOT split it!", a: "Zn(s) + 2H⁺(aq) + 2Cl⁻(aq) → Zn²⁺(aq) + 2Cl⁻(aq) + H₂(g)", hint: "Zn(s) stays as Zn(s). H₂(g) is a gas — stays whole. Only split HCl and ZnCl₂." },
+    stage2: { q: "Identify the spectator ions.", a: "Cl⁻", hint: "Only Cl⁻ appears unchanged on both sides." },
+    stage3: { q: "Write the net ionic equation.", a: "Zn(s) + 2H⁺(aq) → Zn²⁺(aq) + H₂(g)", hint: "Zn displaces H⁺ — remove the Cl⁻ spectator." }
+  },
+  {
+    molecular: "Mg(s) + 2HCl(aq) → MgCl₂(aq) + H₂(g)",
+    type: "Metal Displacement", tier: 2, stars: "⭐⭐",
+    stage1: { q: "Write the full ionic equation.", a: "Mg(s) + 2H⁺(aq) + 2Cl⁻(aq) → Mg²⁺(aq) + 2Cl⁻(aq) + H₂(g)", hint: "Mg(s) stays solid. Split HCl and MgCl₂. H₂ stays as gas." },
+    stage2: { q: "Identify the spectator ions.", a: "Cl⁻", hint: "Cl⁻ appears on both sides." },
+    stage3: { q: "Write the net ionic equation.", a: "Mg(s) + 2H⁺(aq) → Mg²⁺(aq) + H₂(g)", hint: "Remove Cl⁻ — Mg reacts with H⁺." }
+  },
+  {
+    molecular: "Fe(s) + 2HCl(aq) → FeCl₂(aq) + H₂(g)",
+    type: "Metal Displacement", tier: 2, stars: "⭐⭐",
+    stage1: { q: "Write the full ionic equation.", a: "Fe(s) + 2H⁺(aq) + 2Cl⁻(aq) → Fe²⁺(aq) + 2Cl⁻(aq) + H₂(g)", hint: "Fe(s) stays solid. Note Fe forms Fe²⁺ (iron(II))." },
+    stage2: { q: "Identify the spectator ions.", a: "Cl⁻", hint: "Cl⁻ is unchanged on both sides." },
+    stage3: { q: "Write the net ionic equation.", a: "Fe(s) + 2H⁺(aq) → Fe²⁺(aq) + H₂(g)", hint: "Fe displaces H⁺ to form Fe²⁺ and H₂ gas." }
+  },
+  {
+    molecular: "Zn(s) + H₂SO₄(aq) → ZnSO₄(aq) + H₂(g)",
+    type: "Metal Displacement", tier: 2, stars: "⭐⭐",
+    stage1: { q: "Write the full ionic equation.", a: "Zn(s) + 2H⁺(aq) + SO₄²⁻(aq) → Zn²⁺(aq) + SO₄²⁻(aq) + H₂(g)", hint: "H₂SO₄ → 2H⁺ + SO₄²⁻. ZnSO₄ → Zn²⁺ + SO₄²⁻." },
+    stage2: { q: "Identify the spectator ions.", a: "SO₄²⁻", hint: "SO₄²⁻ appears unchanged on both sides." },
+    stage3: { q: "Write the net ionic equation.", a: "Zn(s) + 2H⁺(aq) → Zn²⁺(aq) + H₂(g)", hint: "Remove SO₄²⁻ — same net equation as Zn + HCl!" }
+  },
+  {
+    molecular: "Mg(s) + H₂SO₄(aq) → MgSO₄(aq) + H₂(g)",
+    type: "Metal Displacement", tier: 2, stars: "⭐⭐",
+    stage1: { q: "Write the full ionic equation.", a: "Mg(s) + 2H⁺(aq) + SO₄²⁻(aq) → Mg²⁺(aq) + SO₄²⁻(aq) + H₂(g)", hint: "H₂SO₄ gives 2H⁺ and SO₄²⁻. MgSO₄ gives Mg²⁺ and SO₄²⁻." },
+    stage2: { q: "Identify the spectator ions.", a: "SO₄²⁻", hint: "SO₄²⁻ is on both sides." },
+    stage3: { q: "Write the net ionic equation.", a: "Mg(s) + 2H⁺(aq) → Mg²⁺(aq) + H₂(g)", hint: "Metal + acid net ionic — always metal displacing H⁺." }
+  },
+  {
+    molecular: "Fe(s) + H₂SO₄(aq) → FeSO₄(aq) + H₂(g)",
+    type: "Metal Displacement", tier: 2, stars: "⭐⭐",
+    stage1: { q: "Write the full ionic equation.", a: "Fe(s) + 2H⁺(aq) + SO₄²⁻(aq) → Fe²⁺(aq) + SO₄²⁻(aq) + H₂(g)", hint: "Fe(s) stays solid. FeSO₄ → Fe²⁺ + SO₄²⁻." },
+    stage2: { q: "Identify the spectator ions.", a: "SO₄²⁻", hint: "SO₄²⁻ is the spectator here." },
+    stage3: { q: "Write the net ionic equation.", a: "Fe(s) + 2H⁺(aq) → Fe²⁺(aq) + H₂(g)", hint: "Fe reacts with H⁺ — SO₄²⁻ is just a spectator." }
+  },
+  {
+    molecular: "2HCl(aq) + Na₂CO₃(aq) → 2NaCl(aq) + H₂O(l) + CO₂(g)",
+    type: "Acid + Carbonate", tier: 2, stars: "⭐⭐",
+    stage1: { q: "Write the full ionic equation. CO₂ is a gas — do NOT split it!", a: "2H⁺(aq) + 2Cl⁻(aq) + 2Na⁺(aq) + CO₃²⁻(aq) → 2Na⁺(aq) + 2Cl⁻(aq) + H₂O(l) + CO₂(g)", hint: "CO₃²⁻ stays as CO₃²⁻. CO₂(g) stays whole. H₂O(l) stays whole." },
+    stage2: { q: "Identify the spectator ions.", a: "Na⁺, Cl⁻", hint: "Na⁺ and Cl⁻ appear unchanged on both sides." },
+    stage3: { q: "Write the net ionic equation.", a: "2H⁺(aq) + CO₃²⁻(aq) → H₂O(l) + CO₂(g)", hint: "Remove Na⁺ and Cl⁻ spectators." }
+  },
+  {
+    molecular: "2HCl(aq) + K₂CO₃(aq) → 2KCl(aq) + H₂O(l) + CO₂(g)",
+    type: "Acid + Carbonate", tier: 2, stars: "⭐⭐",
+    stage1: { q: "Write the full ionic equation.", a: "2H⁺(aq) + 2Cl⁻(aq) + 2K⁺(aq) + CO₃²⁻(aq) → 2K⁺(aq) + 2Cl⁻(aq) + H₂O(l) + CO₂(g)", hint: "K₂CO₃ → 2K⁺ + CO₃²⁻. KCl → K⁺ + Cl⁻ (×2)." },
+    stage2: { q: "Identify the spectator ions.", a: "K⁺, Cl⁻", hint: "K⁺ and Cl⁻ are unchanged." },
+    stage3: { q: "Write the net ionic equation.", a: "2H⁺(aq) + CO₃²⁻(aq) → H₂O(l) + CO₂(g)", hint: "Same net equation as acid + Na₂CO₃!" }
+  },
+  {
+    molecular: "H₂SO₄(aq) + Na₂CO₃(aq) → Na₂SO₄(aq) + H₂O(l) + CO₂(g)",
+    type: "Acid + Carbonate", tier: 2, stars: "⭐⭐",
+    stage1: { q: "Write the full ionic equation.", a: "2H⁺(aq) + SO₄²⁻(aq) + 2Na⁺(aq) + CO₃²⁻(aq) → 2Na⁺(aq) + SO₄²⁻(aq) + H₂O(l) + CO₂(g)", hint: "H₂SO₄ → 2H⁺ + SO₄²⁻. Na₂CO₃ → 2Na⁺ + CO₃²⁻." },
+    stage2: { q: "Identify the spectator ions.", a: "Na⁺, SO₄²⁻", hint: "Na⁺ and SO₄²⁻ are unchanged on both sides." },
+    stage3: { q: "Write the net ionic equation.", a: "2H⁺(aq) + CO₃²⁻(aq) → H₂O(l) + CO₂(g)", hint: "The acid + carbonate net equation is always 2H⁺ + CO₃²⁻ → H₂O + CO₂." }
+  },
+  {
+    molecular: "2HNO₃(aq) + Na₂CO₃(aq) → 2NaNO₃(aq) + H₂O(l) + CO₂(g)",
+    type: "Acid + Carbonate", tier: 2, stars: "⭐⭐",
+    stage1: { q: "Write the full ionic equation.", a: "2H⁺(aq) + 2NO₃⁻(aq) + 2Na⁺(aq) + CO₃²⁻(aq) → 2Na⁺(aq) + 2NO₃⁻(aq) + H₂O(l) + CO₂(g)", hint: "HNO₃ → H⁺ + NO₃⁻ (×2). NaNO₃ → Na⁺ + NO₃⁻ (×2)." },
+    stage2: { q: "Identify the spectator ions.", a: "Na⁺, NO₃⁻", hint: "Na⁺ and NO₃⁻ are on both sides." },
+    stage3: { q: "Write the net ionic equation.", a: "2H⁺(aq) + CO₃²⁻(aq) → H₂O(l) + CO₂(g)", hint: "Always the same for acid + soluble carbonate!" }
+  },
+
+  // TIER 3 — Metal + Salt + Halogen + Solid Carbonate (19–28) ⭐⭐⭐
+  {
+    molecular: "Fe(s) + CuSO₄(aq) → FeSO₄(aq) + Cu(s)",
+    type: "Metal Displacement", tier: 3, stars: "⭐⭐⭐",
+    stage1: { q: "Write the full ionic equation. Remember: Fe(s) and Cu(s) are solids — do NOT split them!", a: "Fe(s) + Cu²⁺(aq) + SO₄²⁻(aq) → Fe²⁺(aq) + SO₄²⁻(aq) + Cu(s)", hint: "Both metals stay solid. Only split the aqueous salts CuSO₄ and FeSO₄." },
+    stage2: { q: "Identify the spectator ions.", a: "SO₄²⁻", hint: "SO₄²⁻ is unchanged on both sides." },
+    stage3: { q: "Write the net ionic equation.", a: "Fe(s) + Cu²⁺(aq) → Fe²⁺(aq) + Cu(s)", hint: "Fe displaces Cu²⁺ — remove SO₄²⁻." }
+  },
+  {
+    molecular: "Zn(s) + CuSO₄(aq) → ZnSO₄(aq) + Cu(s)",
+    type: "Metal Displacement", tier: 3, stars: "⭐⭐⭐",
+    stage1: { q: "Write the full ionic equation.", a: "Zn(s) + Cu²⁺(aq) + SO₄²⁻(aq) → Zn²⁺(aq) + SO₄²⁻(aq) + Cu(s)", hint: "Both Zn and Cu are solids — never split. Split CuSO₄ and ZnSO₄." },
+    stage2: { q: "Identify the spectator ions.", a: "SO₄²⁻", hint: "Only SO₄²⁻ is unchanged." },
+    stage3: { q: "Write the net ionic equation.", a: "Zn(s) + Cu²⁺(aq) → Zn²⁺(aq) + Cu(s)", hint: "Zn is more reactive than Cu — it displaces Cu²⁺." }
+  },
+  {
+    molecular: "Mg(s) + CuSO₄(aq) → MgSO₄(aq) + Cu(s)",
+    type: "Metal Displacement", tier: 3, stars: "⭐⭐⭐",
+    stage1: { q: "Write the full ionic equation.", a: "Mg(s) + Cu²⁺(aq) + SO₄²⁻(aq) → Mg²⁺(aq) + SO₄²⁻(aq) + Cu(s)", hint: "Mg(s) and Cu(s) stay solid. Split the aqueous salts." },
+    stage2: { q: "Identify the spectator ions.", a: "SO₄²⁻", hint: "SO₄²⁻ is the only spectator." },
+    stage3: { q: "Write the net ionic equation.", a: "Mg(s) + Cu²⁺(aq) → Mg²⁺(aq) + Cu(s)", hint: "Mg displaces Cu²⁺ — reactive metal displaces less reactive metal ion." }
+  },
+  {
+    molecular: "2HCl(aq) + CaCO₃(s) → CaCl₂(aq) + H₂O(l) + CO₂(g)",
+    type: "Acid + Carbonate", tier: 3, stars: "⭐⭐⭐",
+    stage1: { q: "Write the full ionic equation. CaCO₃ is a solid — do NOT split it even though it is ionic!", a: "2H⁺(aq) + 2Cl⁻(aq) + CaCO₃(s) → Ca²⁺(aq) + 2Cl⁻(aq) + H₂O(l) + CO₂(g)", hint: "CaCO₃(s) is a solid — it stays as CaCO₃(s). Only split HCl and CaCl₂." },
+    stage2: { q: "Identify the spectator ions.", a: "Cl⁻", hint: "Cl⁻ appears unchanged on both sides." },
+    stage3: { q: "Write the net ionic equation.", a: "2H⁺(aq) + CaCO₃(s) → Ca²⁺(aq) + H₂O(l) + CO₂(g)", hint: "H⁺ reacts with solid CaCO₃ — different from soluble carbonates!" }
+  },
+  {
+    molecular: "H₂SO₄(aq) + CaCO₃(s) → CaSO₄(aq) + H₂O(l) + CO₂(g)",
+    type: "Acid + Carbonate", tier: 3, stars: "⭐⭐⭐",
+    stage1: { q: "Write the full ionic equation. Remember CaCO₃ is solid!", a: "2H⁺(aq) + SO₄²⁻(aq) + CaCO₃(s) → Ca²⁺(aq) + SO₄²⁻(aq) + H₂O(l) + CO₂(g)", hint: "CaCO₃(s) is NOT split. H₂SO₄ → 2H⁺ + SO₄²⁻. CaSO₄ → Ca²⁺ + SO₄²⁻." },
+    stage2: { q: "Identify the spectator ions.", a: "SO₄²⁻", hint: "SO₄²⁻ is unchanged on both sides." },
+    stage3: { q: "Write the net ionic equation.", a: "2H⁺(aq) + CaCO₃(s) → Ca²⁺(aq) + H₂O(l) + CO₂(g)", hint: "Solid CaCO₃ stays in the net equation — it's a reactant, not spectator!" }
+  },
+  {
+    molecular: "Cl₂(aq) + 2KBr(aq) → 2KCl(aq) + Br₂(aq)",
+    type: "Halogen Displacement", tier: 3, stars: "⭐⭐⭐",
+    stage1: { q: "Write the full ionic equation. Cl₂ and Br₂ are covalent molecules — do NOT split them!", a: "Cl₂(aq) + 2K⁺(aq) + 2Br⁻(aq) → 2K⁺(aq) + 2Cl⁻(aq) + Br₂(aq)", hint: "Cl₂(aq) and Br₂(aq) are covalent — they are never split into ions. Only split KBr and KCl." },
+    stage2: { q: "Identify the spectator ions.", a: "K⁺", hint: "K⁺ appears unchanged on both sides." },
+    stage3: { q: "Write the net ionic equation.", a: "Cl₂(aq) + 2Br⁻(aq) → 2Cl⁻(aq) + Br₂(aq)", hint: "Cl₂ displaces Br⁻ — remove K⁺ spectator." }
+  },
+  {
+    molecular: "Cl₂(aq) + 2NaBr(aq) → 2NaCl(aq) + Br₂(aq)",
+    type: "Halogen Displacement", tier: 3, stars: "⭐⭐⭐",
+    stage1: { q: "Write the full ionic equation.", a: "Cl₂(aq) + 2Na⁺(aq) + 2Br⁻(aq) → 2Na⁺(aq) + 2Cl⁻(aq) + Br₂(aq)", hint: "Cl₂ and Br₂ are covalent — never split. Split NaBr and NaCl." },
+    stage2: { q: "Identify the spectator ions.", a: "Na⁺", hint: "Na⁺ is unchanged on both sides." },
+    stage3: { q: "Write the net ionic equation.", a: "Cl₂(aq) + 2Br⁻(aq) → 2Cl⁻(aq) + Br₂(aq)", hint: "Same net equation as Cl₂ + KBr — the net equation doesn't depend on the spectator cation!" }
+  },
+  {
+    molecular: "Cl₂(aq) + 2KI(aq) → 2KCl(aq) + I₂(aq)",
+    type: "Halogen Displacement", tier: 3, stars: "⭐⭐⭐",
+    stage1: { q: "Write the full ionic equation.", a: "Cl₂(aq) + 2K⁺(aq) + 2I⁻(aq) → 2K⁺(aq) + 2Cl⁻(aq) + I₂(aq)", hint: "I₂(aq) is covalent — do not split it. Split KI and KCl only." },
+    stage2: { q: "Identify the spectator ions.", a: "K⁺", hint: "K⁺ is unchanged on both sides." },
+    stage3: { q: "Write the net ionic equation.", a: "Cl₂(aq) + 2I⁻(aq) → 2Cl⁻(aq) + I₂(aq)", hint: "Cl₂ displaces I⁻ — Cl is more reactive than I." }
+  },
+  {
+    molecular: "Cl₂(aq) + 2NaI(aq) → 2NaCl(aq) + I₂(aq)",
+    type: "Halogen Displacement", tier: 3, stars: "⭐⭐⭐",
+    stage1: { q: "Write the full ionic equation.", a: "Cl₂(aq) + 2Na⁺(aq) + 2I⁻(aq) → 2Na⁺(aq) + 2Cl⁻(aq) + I₂(aq)", hint: "Cl₂ and I₂ are covalent — don't split. Split NaI and NaCl." },
+    stage2: { q: "Identify the spectator ions.", a: "Na⁺", hint: "Na⁺ is on both sides unchanged." },
+    stage3: { q: "Write the net ionic equation.", a: "Cl₂(aq) + 2I⁻(aq) → 2Cl⁻(aq) + I₂(aq)", hint: "Remove Na⁺ — Cl₂ displaces I⁻." }
+  },
+  {
+    molecular: "Br₂(aq) + 2KI(aq) → 2KBr(aq) + I₂(aq)",
+    type: "Halogen Displacement", tier: 3, stars: "⭐⭐⭐",
+    stage1: { q: "Write the full ionic equation.", a: "Br₂(aq) + 2K⁺(aq) + 2I⁻(aq) → 2K⁺(aq) + 2Br⁻(aq) + I₂(aq)", hint: "Br₂ and I₂ are covalent. Split KI and KBr only." },
+    stage2: { q: "Identify the spectator ions.", a: "K⁺", hint: "K⁺ is unchanged — it's always a spectator in halogen displacement!" },
+    stage3: { q: "Write the net ionic equation.", a: "Br₂(aq) + 2I⁻(aq) → 2Br⁻(aq) + I₂(aq)", hint: "Br₂ displaces I⁻ — Br is more reactive than I." }
+  },
+
+  // TIER 4 — Boss Rounds (29–40) ⭐⭐⭐⭐–⭐⭐⭐⭐⭐
+  {
+    molecular: "Br₂(aq) + 2NaI(aq) → 2NaBr(aq) + I₂(aq)",
+    type: "Halogen Displacement", tier: 4, stars: "⭐⭐⭐⭐",
+    stage1: { q: "Write the full ionic equation. No hints from this tier!", a: "Br₂(aq) + 2Na⁺(aq) + 2I⁻(aq) → 2Na⁺(aq) + 2Br⁻(aq) + I₂(aq)", hint: "Covalent halogens stay whole. Split NaI and NaBr." },
+    stage2: { q: "Identify the spectator ions.", a: "Na⁺", hint: "Na⁺ is the spectator." },
+    stage3: { q: "Write the net ionic equation.", a: "Br₂(aq) + 2I⁻(aq) → 2Br⁻(aq) + I₂(aq)", hint: "Same net equation as Br₂ + KI." }
+  },
+  {
+    molecular: "Mg(s) + 2AgNO₃(aq) → Mg(NO₃)₂(aq) + 2Ag(s)",
+    type: "Metal Displacement", tier: 4, stars: "⭐⭐⭐⭐",
+    stage1: { q: "Write the full ionic equation.", a: "Mg(s) + 2Ag⁺(aq) + 2NO₃⁻(aq) → Mg²⁺(aq) + 2NO₃⁻(aq) + 2Ag(s)", hint: "Mg(s) and Ag(s) are solid metals — never split. AgNO₃ → Ag⁺ + NO₃⁻. Mg(NO₃)₂ → Mg²⁺ + 2NO₃⁻." },
+    stage2: { q: "Identify the spectator ions.", a: "NO₃⁻", hint: "NO₃⁻ appears unchanged on both sides." },
+    stage3: { q: "Write the net ionic equation.", a: "Mg(s) + 2Ag⁺(aq) → Mg²⁺(aq) + 2Ag(s)", hint: "Remove NO₃⁻ — Mg displaces Ag⁺." }
+  },
+  {
+    molecular: "AgNO₃(aq) + NaCl(aq) → AgCl(s) + NaNO₃(aq)",
+    type: "Precipitation", tier: 4, stars: "⭐⭐⭐⭐",
+    stage1: { q: "Write the full ionic equation. AgCl is a precipitate — do NOT split it!", a: "Ag⁺(aq) + NO₃⁻(aq) + Na⁺(aq) + Cl⁻(aq) → AgCl(s) + Na⁺(aq) + NO₃⁻(aq)", hint: "AgCl(s) is insoluble — it stays as AgCl(s). Split all aqueous salts." },
+    stage2: { q: "Identify the spectator ions.", a: "Na⁺, NO₃⁻", hint: "Na⁺ and NO₃⁻ are on both sides unchanged." },
+    stage3: { q: "Write the net ionic equation.", a: "Ag⁺(aq) + Cl⁻(aq) → AgCl(s)", hint: "The precipitate forms — remove spectators to reveal the reaction." }
+  },
+  {
+    molecular: "AgNO₃(aq) + HCl(aq) → AgCl(s) + HNO₃(aq)",
+    type: "Precipitation", tier: 4, stars: "⭐⭐⭐⭐",
+    stage1: { q: "Write the full ionic equation.", a: "Ag⁺(aq) + NO₃⁻(aq) + H⁺(aq) + Cl⁻(aq) → AgCl(s) + H⁺(aq) + NO₃⁻(aq)", hint: "AgCl(s) stays as precipitate. Split AgNO₃, HCl, and HNO₃." },
+    stage2: { q: "Identify the spectator ions.", a: "H⁺, NO₃⁻", hint: "H⁺ and NO₃⁻ appear unchanged on both sides." },
+    stage3: { q: "Write the net ionic equation.", a: "Ag⁺(aq) + Cl⁻(aq) → AgCl(s)", hint: "Same net equation as AgNO₃ + NaCl — the spectator doesn't matter!" }
+  },
+  {
+    molecular: "AgNO₃(aq) + NaBr(aq) → AgBr(s) + NaNO₃(aq)",
+    type: "Precipitation", tier: 4, stars: "⭐⭐⭐⭐",
+    stage1: { q: "Write the full ionic equation.", a: "Ag⁺(aq) + NO₃⁻(aq) + Na⁺(aq) + Br⁻(aq) → AgBr(s) + Na⁺(aq) + NO₃⁻(aq)", hint: "AgBr(s) is insoluble — stays whole. Split all aqueous salts." },
+    stage2: { q: "Identify the spectator ions.", a: "Na⁺, NO₃⁻", hint: "Na⁺ and NO₃⁻ are unchanged." },
+    stage3: { q: "Write the net ionic equation.", a: "Ag⁺(aq) + Br⁻(aq) → AgBr(s)", hint: "Ag⁺ reacts with Br⁻ to form AgBr precipitate." }
+  },
+  {
+    molecular: "AgNO₃(aq) + NaI(aq) → AgI(s) + NaNO₃(aq)",
+    type: "Precipitation", tier: 4, stars: "⭐⭐⭐⭐",
+    stage1: { q: "Write the full ionic equation.", a: "Ag⁺(aq) + NO₃⁻(aq) + Na⁺(aq) + I⁻(aq) → AgI(s) + Na⁺(aq) + NO₃⁻(aq)", hint: "AgI(s) is insoluble — do not split it. Split AgNO₃, NaI, and NaNO₃." },
+    stage2: { q: "Identify the spectator ions.", a: "Na⁺, NO₃⁻", hint: "Na⁺ and NO₃⁻ are on both sides." },
+    stage3: { q: "Write the net ionic equation.", a: "Ag⁺(aq) + I⁻(aq) → AgI(s)", hint: "Ag⁺ + halide ion → silver halide precipitate." }
+  },
+  {
+    molecular: "BaCl₂(aq) + Na₂SO₄(aq) → BaSO₄(s) + 2NaCl(aq)",
+    type: "Precipitation", tier: 4, stars: "⭐⭐⭐⭐",
+    stage1: { q: "Write the full ionic equation. BaSO₄ is an insoluble precipitate!", a: "Ba²⁺(aq) + 2Cl⁻(aq) + 2Na⁺(aq) + SO₄²⁻(aq) → BaSO₄(s) + 2Na⁺(aq) + 2Cl⁻(aq)", hint: "BaSO₄(s) stays whole — it's insoluble! Split BaCl₂, Na₂SO₄, and NaCl." },
+    stage2: { q: "Identify the spectator ions.", a: "Na⁺, Cl⁻", hint: "Na⁺ and Cl⁻ are unchanged on both sides." },
+    stage3: { q: "Write the net ionic equation.", a: "Ba²⁺(aq) + SO₄²⁻(aq) → BaSO₄(s)", hint: "Ba²⁺ and SO₄²⁻ combine to form the white precipitate." }
+  },
+  {
+    molecular: "BaCl₂(aq) + H₂SO₄(aq) → BaSO₄(s) + 2HCl(aq)",
+    type: "Precipitation", tier: 4, stars: "⭐⭐⭐⭐",
+    stage1: { q: "Write the full ionic equation.", a: "Ba²⁺(aq) + 2Cl⁻(aq) + 2H⁺(aq) + SO₄²⁻(aq) → BaSO₄(s) + 2H⁺(aq) + 2Cl⁻(aq)", hint: "H₂SO₄ → 2H⁺ + SO₄²⁻. BaSO₄(s) is insoluble — stays whole." },
+    stage2: { q: "Identify the spectator ions.", a: "H⁺, Cl⁻", hint: "H⁺ and Cl⁻ are unchanged on both sides." },
+    stage3: { q: "Write the net ionic equation.", a: "Ba²⁺(aq) + SO₄²⁻(aq) → BaSO₄(s)", hint: "Same net equation as BaCl₂ + Na₂SO₄ — the spectators differ but the reaction is the same!" }
+  },
+  {
+    molecular: "Pb(NO₃)₂(aq) + 2NaCl(aq) → PbCl₂(s) + 2NaNO₃(aq)",
+    type: "Precipitation", tier: 4, stars: "⭐⭐⭐⭐⭐",
+    stage1: { q: "Write the full ionic equation. PbCl₂ is an insoluble precipitate!", a: "Pb²⁺(aq) + 2NO₃⁻(aq) + 2Na⁺(aq) + 2Cl⁻(aq) → PbCl₂(s) + 2Na⁺(aq) + 2NO₃⁻(aq)", hint: "Pb(NO₃)₂ → Pb²⁺ + 2NO₃⁻. PbCl₂(s) is insoluble — do not split it." },
+    stage2: { q: "Identify the spectator ions.", a: "Na⁺, NO₃⁻", hint: "Na⁺ and NO₃⁻ appear unchanged on both sides." },
+    stage3: { q: "Write the net ionic equation.", a: "Pb²⁺(aq) + 2Cl⁻(aq) → PbCl₂(s)", hint: "Pb²⁺ combines with 2Cl⁻ to form the insoluble PbCl₂." }
+  },
+  {
+    molecular: "Pb(NO₃)₂(aq) + 2KI(aq) → PbI₂(s) + 2KNO₃(aq)",
+    type: "Precipitation", tier: 4, stars: "⭐⭐⭐⭐⭐",
+    stage1: { q: "Write the full ionic equation.", a: "Pb²⁺(aq) + 2NO₃⁻(aq) + 2K⁺(aq) + 2I⁻(aq) → PbI₂(s) + 2K⁺(aq) + 2NO₃⁻(aq)", hint: "PbI₂(s) is insoluble — stays whole. Split Pb(NO₃)₂, KI, and KNO₃." },
+    stage2: { q: "Identify the spectator ions.", a: "K⁺, NO₃⁻", hint: "K⁺ and NO₃⁻ are unchanged." },
+    stage3: { q: "Write the net ionic equation.", a: "Pb²⁺(aq) + 2I⁻(aq) → PbI₂(s)", hint: "Beautiful yellow precipitate — Pb²⁺ + 2I⁻!" }
+  },
+  {
+    molecular: "CaCl₂(aq) + Na₂CO₃(aq) → CaCO₃(s) + 2NaCl(aq)",
+    type: "Precipitation", tier: 4, stars: "⭐⭐⭐⭐⭐",
+    stage1: { q: "Write the full ionic equation.", a: "Ca²⁺(aq) + 2Cl⁻(aq) + 2Na⁺(aq) + CO₃²⁻(aq) → CaCO₃(s) + 2Na⁺(aq) + 2Cl⁻(aq)", hint: "CaCO₃(s) is insoluble — stays whole. Split all aqueous ionic compounds." },
+    stage2: { q: "Identify the spectator ions.", a: "Na⁺, Cl⁻", hint: "Na⁺ and Cl⁻ are unchanged." },
+    stage3: { q: "Write the net ionic equation.", a: "Ca²⁺(aq) + CO₃²⁻(aq) → CaCO₃(s)", hint: "Ca²⁺ and CO₃²⁻ combine to form white CaCO₃ precipitate." }
+  },
+  {
+    molecular: "FeCl₂(aq) + 2NaOH(aq) → Fe(OH)₂(s) + 2NaCl(aq)",
+    type: "Precipitation", tier: 4, stars: "⭐⭐⭐⭐⭐",
+    stage1: { q: "Write the full ionic equation.", a: "Fe²⁺(aq) + 2Cl⁻(aq) + 2Na⁺(aq) + 2OH⁻(aq) → Fe(OH)₂(s) + 2Na⁺(aq) + 2Cl⁻(aq)", hint: "Fe(OH)₂(s) is insoluble — stays whole. Split FeCl₂, NaOH, and NaCl." },
+    stage2: { q: "Identify the spectator ions.", a: "Na⁺, Cl⁻", hint: "Na⁺ and Cl⁻ are the spectators." },
+    stage3: { q: "Write the net ionic equation.", a: "Fe²⁺(aq) + 2OH⁻(aq) → Fe(OH)₂(s)", hint: "Fe²⁺ combines with OH⁻ to form green Fe(OH)₂ precipitate." }
+  }
+];
+
+// ─────────────────────────────────────────────
+// GAME STATE
+// ─────────────────────────────────────────────
+let state = {
+  team1Name: 'Team 1',
+  team2Name: 'Team 2',
+  score1: 0,
+  score2: 0,
+  currentRound: 0,
+  currentStage: 1, // 1, 2, 3
+  currentTeam: 1,  // alternates per round
+  stageComplete: [false, false, false],
+  attempts: 0,
+  maxRounds: 40,
+  activeRounds: [],
+  huddleActive: false,
+  huddleInterval: null,
+  hintUsed: false
+};
+
+let selectedRounds = 40;
+
+function selectRounds(n) {
+  selectedRounds = n;
+  document.querySelectorAll('.rounds-btn').forEach(b => b.classList.remove('selected'));
+  event.target.classList.add('selected');
+}
+
+function startGame() {
+  state.team1Name = document.getElementById('team1Name').value || 'Team 1';
+  state.team2Name = document.getElementById('team2Name').value || 'Team 2';
+  state.score1 = 0;
+  state.score2 = 0;
+  state.currentRound = 0;
+  state.currentTeam = 1;
+  state.maxRounds = selectedRounds;
+
+  // Select rounds
+  if (selectedRounds === 40) {
+    state.activeRounds = [...questions];
+  } else {
+    // Pick spread across tiers
+    state.activeRounds = questions.slice(0, selectedRounds);
+  }
+
+  document.getElementById('setupScreen').style.display = 'none';
+  document.getElementById('gameScreen').style.display = 'block';
+
+  document.getElementById('team1Display').textContent = state.team1Name;
+  document.getElementById('team2Display').textContent = state.team2Name;
+  document.getElementById('finalName1').textContent = state.team1Name;
+  document.getElementById('finalName2').textContent = state.team2Name;
+
+  updateScoreboard();
+  loadRound();
+}
+
+function loadRound() {
+  if (state.currentRound >= state.activeRounds.length) {
+    showGameOver();
+    return;
+  }
+
+  const q = state.activeRounds[state.currentRound];
+  state.currentStage = 1;
+  state.stageComplete = [false, false, false];
+  state.attempts = 0;
+  state.hintUsed = false;
+
+  // Progress
+  const pct = (state.currentRound / state.activeRounds.length) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+
+  // Round info
+  document.getElementById('roundNum').textContent = `Round ${state.currentRound + 1}`;
+  document.getElementById('roundInfo').textContent = `Round ${state.currentRound + 1} / ${state.activeRounds.length}`;
+  document.getElementById('reactionTypeBadge').textContent = q.type;
+  document.getElementById('diffStars').textContent = q.stars;
+
+  // Tier pills
+  ['tier1pill','tier2pill','tier3pill','tier4pill'].forEach((id, i) => {
+    document.getElementById(id).classList.toggle('active', q.tier === i + 1);
+  });
+
+  // Molecular equation
+  document.getElementById('molecularEq').innerHTML = formatEq(q.molecular);
+
+  // Huddle for tier 3+
+  const huddleEl = document.getElementById('huddleTimer');
+  if (q.tier >= 3) {
+    startHuddle(q.tier >= 4 ? 60 : 45);
+    huddleEl.style.display = 'block';
+  } else {
+    huddleEl.style.display = 'none';
+  }
+
+  loadStage(1);
+  clearFeedback();
+  animateCard();
+}
+
+function loadStage(stageNum) {
+  const q = state.activeRounds[state.currentRound];
+  const stageData = stageNum === 1 ? q.stage1 : stageNum === 2 ? q.stage2 : q.stage3;
+
+  state.currentStage = stageNum;
+  state.attempts = 0;
+  state.hintUsed = false;
+
+  // Show previous stage answers under the chemical equation
+  const box = document.getElementById('prevAnswersBox');
+  const prev1 = document.getElementById('prevAnswer1');
+  const prev2 = document.getElementById('prevAnswer2');
+  if (stageNum === 1) {
+    // Reset — hide all previous answers at start of new round
+    box.style.display = 'none';
+    prev1.style.display = 'none';
+    prev2.style.display = 'none';
+  } else if (stageNum === 2) {
+    // Show Stage 1 answer
+    document.getElementById('prevAns1Text').innerHTML = formatEq(q.stage1.a);
+    prev1.style.display = 'block';
+    prev2.style.display = 'none';
+    box.style.display = 'block';
+  } else if (stageNum === 3) {
+    // Show Stage 1 answer with spectator ions crossed out
+    document.getElementById('prevAns1Text').innerHTML = strikeSpectators(q.stage1.a, q.stage2.a);
+    document.getElementById('prevAns2Text').innerHTML = formatEq(q.stage2.a);
+    prev1.style.display = 'block';
+    prev2.style.display = 'block';
+    box.style.display = 'block';
+  }
+
+  // Stage tabs
+  for (let i = 1; i <= 3; i++) {
+    const tab = document.getElementById(`stageTab${i}`);
+    tab.className = 'stage-tab';
+    if (state.stageComplete[i-1]) tab.classList.add('completed-stage');
+    else if (i === stageNum) tab.classList.add('active-stage');
+  }
+
+  // Labels
+  const labels = ['STAGE 1 — SPLIT IT!', 'STAGE 2 — SPOT THE SPECTATORS!', 'STAGE 3 — NET IT!'];
+  const questions_text = [stageData.q];
+  document.getElementById('questionLabel').textContent = labels[stageNum - 1];
+  document.getElementById('questionText').textContent = stageData.q;
+
+  // Whose turn
+  const turnDiv = document.getElementById('whoseTurn');
+  const turnText = document.getElementById('turnText');
+  const isT1 = state.currentTeam === 1;
+  turnDiv.className = 'whose-turn ' + (isT1 ? 'team1-turn' : 'team2-turn');
+  turnText.textContent = (isT1 ? state.team1Name : state.team2Name) + "'s turn!";
+
+  // Team card highlight
+  document.getElementById('team1Card').classList.toggle('active-team', isT1);
+  document.getElementById('team2Card').classList.toggle('active-team', !isT1);
+  // compact scorebar active dot brightness
+  document.getElementById('team1Card').style.opacity = isT1 ? '1' : '0.55';
+  document.getElementById('team2Card').style.opacity = !isT1 ? '1' : '0.55';
+
+  // Attempt dots
+  resetDots();
+
+  // Hint button — show for tier 1 and 2
+  const hintBtn = document.getElementById('hintBtn');
+  const tier = q.tier;
+  hintBtn.style.display = (tier <= 2) ? 'inline-block' : 'none';
+
+  // Show answer button — after 2 attempts
+  document.getElementById('showAnswerBtn').style.display = 'none';
+
+  // Clear
+  document.getElementById('answerInput').value = '';
+  document.getElementById('hintBox').style.display = 'none';
+  document.getElementById('answerReveal').style.display = 'none';
+  document.getElementById('nextBtn').style.display = 'none';
+  document.getElementById('submitBtn').disabled = false;
+  clearFeedback();
+
+  document.getElementById('answerInput').focus();
+}
+
+function checkAnswer() {
+  const q = state.activeRounds[state.currentRound];
+  const stageData = state.currentStage === 1 ? q.stage1 : state.currentStage === 2 ? q.stage2 : q.stage3;
+  const userAnswer = document.getElementById('answerInput').value.trim();
+
+  if (!userAnswer) return;
+
+  const correct = normalise(userAnswer) === normalise(stageData.a);
+
+  if (correct) {
+    const pts = state.attempts === 0 ? 3 : 1;
+    awardPoints(pts);
+    showFeedback('correct', `✅ Correct! +${pts} point${pts > 1 ? 's' : ''} for ${state.currentTeam === 1 ? state.team1Name : state.team2Name}!`);
+    showAnswerReveal(stageData.a, true);
+    state.stageComplete[state.currentStage - 1] = true;
+    document.getElementById('submitBtn').disabled = true;
+    document.getElementById('showAnswerBtn').style.display = 'none';
+
+    if (state.currentStage < 3) {
+      const nextBtn = document.getElementById('nextBtn');
+      nextBtn.textContent = `Next: Stage ${state.currentStage + 1} →`;
+      nextBtn.style.display = 'block';
+    } else {
+      const nextBtn = document.getElementById('nextBtn');
+      nextBtn.textContent = state.currentRound + 1 < state.activeRounds.length ? '⚗️ Next Round →' : '🏆 See Results!';
+      nextBtn.style.display = 'block';
+    }
+    launchConfetti();
+  } else {
+    state.attempts++;
+    markDot(state.attempts - 1);
+    if (state.attempts >= 2) {
+      showFeedback('wrong', `❌ Incorrect. Show the answer to continue.`);
+      document.getElementById('showAnswerBtn').style.display = 'inline-block';
+      document.getElementById('submitBtn').disabled = true;
+    } else {
+      showFeedback('wrong', `❌ Not quite! You have ${2 - state.attempts} attempt${2 - state.attempts === 1 ? '' : 's'} left.`);
+    }
+  }
+}
+
+function revealAnswer() {
+  const q = state.activeRounds[state.currentRound];
+  const stageData = state.currentStage === 1 ? q.stage1 : state.currentStage === 2 ? q.stage2 : q.stage3;
+  showAnswerReveal(stageData.a, false);
+  state.stageComplete[state.currentStage - 1] = true;
+  document.getElementById('showAnswerBtn').style.display = 'none';
+  document.getElementById('submitBtn').disabled = true;
+  showFeedback('info', `📖 Answer revealed. No points awarded for this stage.`);
+
+  if (state.currentStage < 3) {
+    const nextBtn = document.getElementById('nextBtn');
+    nextBtn.textContent = `Next: Stage ${state.currentStage + 1} →`;
+    nextBtn.style.display = 'block';
+  } else {
+    const nextBtn = document.getElementById('nextBtn');
+    nextBtn.textContent = state.currentRound + 1 < state.activeRounds.length ? '⚗️ Next Round →' : '🏆 See Results!';
+    nextBtn.style.display = 'block';
+  }
+}
+
+function showHint() {
+  const q = state.activeRounds[state.currentRound];
+  const stageData = state.currentStage === 1 ? q.stage1 : state.currentStage === 2 ? q.stage2 : q.stage3;
+  document.getElementById('hintText').textContent = stageData.hint;
+  document.getElementById('hintBox').style.display = 'block';
+  state.hintUsed = true;
+}
+
+function nextStage() {
+  if (state.currentStage < 3) {
+    // Same team plays all 3 stages of the same round
+    loadStage(state.currentStage + 1);
+  } else {
+    // Only swap teams when moving to a new round
+    state.currentRound++;
+    state.currentTeam = state.currentTeam === 1 ? 2 : 1;
+    loadRound();
+  }
+}
+
+function awardPoints(pts) {
+  if (state.currentTeam === 1) {
+    state.score1 += pts;
+    document.getElementById('score1').textContent = state.score1;
+    showPointsPopup(`+${pts}`, 'team1');
+  } else {
+    state.score2 += pts;
+    document.getElementById('score2').textContent = state.score2;
+    showPointsPopup(`+${pts}`, 'team2');
+  }
+  updateScoreboard();
+}
+
+function updateScoreboard() {
+  document.getElementById('score1').textContent = state.score1;
+  document.getElementById('score2').textContent = state.score2;
+}
+
+function showPointsPopup(pts, team) {
+  const popup = document.getElementById('pointsPopup');
+  const color = team === 'team1' ? '#ff6b9d' : '#4ecdc4';
+  popup.style.background = `linear-gradient(135deg, ${color}, ${color}88)`;
+  popup.innerHTML = `${pts}<div class="points-sub">${team === 'team1' ? state.team1Name : state.team2Name}!</div>`;
+  popup.classList.add('show');
+  setTimeout(() => popup.classList.remove('show'), 1200);
+}
+
+function showFeedback(type, msg) {
+  const fb = document.getElementById('feedbackBox');
+  fb.className = `feedback ${type}`;
+  fb.textContent = msg;
+  fb.style.display = 'block';
+}
+
+function clearFeedback() {
+  const fb = document.getElementById('feedbackBox');
+  fb.style.display = 'none';
+}
+
+function showAnswerReveal(answer, isCorrect) {
+  const rev = document.getElementById('answerReveal');
+  rev.querySelector('.reveal-label').textContent = isCorrect ? '✅ CORRECT ANSWER' : '📖 CORRECT ANSWER';
+  document.getElementById('revealText').innerHTML = formatEq(answer);
+  rev.style.display = 'block';
+}
+
+function resetDots() {
+  document.getElementById('dot1').className = 'attempt-dot';
+  document.getElementById('dot2').className = 'attempt-dot';
+}
+
+function markDot(idx) {
+  document.getElementById(`dot${idx + 1}`).classList.add('used');
+}
+
+function startHuddle(seconds) {
+  if (state.huddleInterval) clearInterval(state.huddleInterval);
+  let remaining = seconds;
+  document.getElementById('huddleCount').textContent = remaining;
+  state.huddleInterval = setInterval(() => {
+    remaining--;
+    document.getElementById('huddleCount').textContent = remaining;
+    if (remaining <= 0) {
+      clearInterval(state.huddleInterval);
+      document.getElementById('huddleTimer').style.display = 'none';
+    }
+  }, 1000);
+}
+
+function showGameOver() {
+  document.getElementById('gameScreen').style.display = 'none';
+  const go = document.getElementById('gameOver');
+  go.style.display = 'block';
+
+  document.getElementById('finalScore1').textContent = state.score1;
+  document.getElementById('finalScore2').textContent = state.score2;
+  document.getElementById('finalName1').textContent = state.team1Name;
+  document.getElementById('finalName2').textContent = state.team2Name;
+
+  let winnerMsg = '';
+  if (state.score1 > state.score2) {
+    winnerMsg = `🎉 ${state.team1Name} Wins!`;
+    document.getElementById('finalCard1').classList.add('winner');
+    document.getElementById('crown1').textContent = '👑';
+    document.getElementById('crown2').textContent = '';
+  } else if (state.score2 > state.score1) {
+    winnerMsg = `🎉 ${state.team2Name} Wins!`;
+    document.getElementById('finalCard2').classList.add('winner');
+    document.getElementById('crown2').textContent = '👑';
+    document.getElementById('crown1').textContent = '';
+  } else {
+    winnerMsg = `🤝 It's a Draw!`;
+    document.getElementById('crown1').textContent = '🥇';
+    document.getElementById('crown2').textContent = '🥇';
+  }
+  document.getElementById('winnerText').textContent = winnerMsg;
+  launchConfetti(80);
+}
+
+function restartGame() {
+  document.getElementById('gameOver').style.display = 'none';
+  document.getElementById('finalCard1').classList.remove('winner');
+  document.getElementById('finalCard2').classList.remove('winner');
+  document.getElementById('setupScreen').style.display = 'block';
+}
+
+function animateCard() {
+  const card = document.getElementById('gameCard');
+  card.style.animation = 'none';
+  card.offsetHeight;
+  card.style.animation = 'slideIn 0.4s ease';
+}
+
+// Normalise answers for comparison
+// Strike through spectator ions in the full ionic equation
+function strikeSpectators(fullIonic, spectators) {
+  // Parse spectator list e.g. "Na⁺, Cl⁻"
+  const spectatorList = spectators
+    .split(/,|and/)
+    .map(s => s.trim())
+    .filter(Boolean);
+
+  // Strip state symbol for loose matching: Na⁺(aq) matches spectator Na⁺
+  function stripState(s) {
+    return cleanStr(s).replace(/\((aq|s|l|g)\)/g, '');
+  }
+
+  // Tokenise the equation respecting parentheses depth
+  // Splits on: Unicode → arrow, ASCII ->, and + that follows closing )
+  function splitEquation(eq) {
+    const parts = [];
+    let i = 0, current = '', depth = 0;
+    while (i < eq.length) {
+      const c = eq[i];
+      if (c === '(') { depth++; current += c; }
+      else if (c === ')') { depth--; current += c; }
+      else if (depth === 0 && c === '→') {
+        if (current.trim()) parts.push({type:'term', val:current.trim()});
+        parts.push({type:'arrow'});
+        current = '';
+      } else if (depth === 0 && eq.slice(i, i+2) === '->') {
+        if (current.trim()) parts.push({type:'term', val:current.trim()});
+        parts.push({type:'arrow'});
+        current = ''; i += 2; continue;
+      } else if (depth === 0 && c === '+' && current.trimEnd().endsWith(')')) {
+        if (current.trim()) parts.push({type:'term', val:current.trim()});
+        parts.push({type:'plus'});
+        current = '';
+      } else { current += c; }
+      i++;
+    }
+    if (current.trim()) parts.push({type:'term', val:current.trim()});
+    return parts;
+  }
+
+  const tokens = splitEquation(fullIonic);
+  const resultParts = tokens.map(tok => {
+    if (tok.type === 'arrow') return '<span style="color:var(--gold);font-weight:900;"> → </span>';
+    if (tok.type === 'plus')  return '<span style="color:rgba(255,255,255,0.35);"> + </span>';
+    const isSpectator = spectatorList.some(s => stripState(s) === stripState(tok.val));
+    const formatted = formatEq(tok.val);
+    if (isSpectator) {
+      return `<span style="text-decoration:line-through;text-decoration-color:#ff6b6b;text-decoration-thickness:2px;color:rgba(255,107,107,0.55);">${formatted}<sup style="font-size:8px;color:#ff6b6b;margin-left:1px;">✕</sup></span>`;
+    }
+    return `<span style="color:#ffeaa7;">${formatted}</span>`;
+  });
+
+  return resultParts.join('');
+}
+
+function cleanStr(str) {
+  return str
+    .toLowerCase()
+    .replace(/\s+/g, '')
+    .replace(/⁺/g, '+').replace(/⁻/g, '-')
+    .replace(/²/g, '2').replace(/³/g, '3')
+    .replace(/₁/g, '1').replace(/₂/g, '2').replace(/₃/g, '3').replace(/₄/g, '4')
+    .replace(/→/g, '->').replace(/=>/g, '->')
+    .replace(/<[^>]+>/g, '')
+    .replace(/subscript|superscript/gi, '')
+    .trim();
+}
+
+// Split equation into [reactants, products], sort each side's terms, rejoin
+function normalise(str) {
+  const s = cleanStr(str);
+  const parts = s.split('->');
+  if (parts.length !== 2) return s;
+  const sortSide = side => side.split('+').map(t => t.trim()).filter(Boolean).sort().join('+');
+  // Re-split carefully: ions have + in them e.g. na+(aq), so split on + only when followed by a letter/digit not inside parentheses
+  // Strategy: tokenise by splitting on standalone + (surrounded by ) and ()
+  function tokenise(side) {
+    // Split on + that appears between ) and ( or between ) and end/start
+    return side.split(/\+(?=\w|\d)/).reduce((acc, part) => {
+      // re-attach charge + signs that belong to ions like na+(aq)
+      if (acc.length && !acc[acc.length-1].includes('(')) {
+        acc[acc.length-1] += '+' + part;
+      } else {
+        acc.push(part);
+      }
+      return acc;
+    }, []);
+  }
+  // Simpler robust approach: split on + that is preceded by ) 
+  function splitTerms(side) {
+    const terms = [];
+    let depth = 0, current = '';
+    for (let i = 0; i < side.length; i++) {
+      const c = side[i];
+      if (c === '(') { depth++; current += c; }
+      else if (c === ')') { depth--; current += c; }
+      else if (c === '+' && depth === 0) {
+        // check if this + is a charge (preceded by a digit or letter directly, no space)
+        // After cleaning there are no spaces, so a + between terms comes after )
+        if (current.endsWith(')')) {
+          terms.push(current); current = '';
+        } else { current += c; }
+      } else { current += c; }
+    }
+    if (current) terms.push(current);
+    return terms;
+  }
+  const reactants = splitTerms(parts[0]).sort().join('+');
+  const products  = splitTerms(parts[1]).sort().join('+');
+  return reactants + '->' + products;
+}
+
+// Format equations with superscripts/subscripts
+function formatEq(eq) {
+  if (!eq) return '';
+  return eq
+    .replace(/([A-Za-z\)])(\d+)/g, '$1<sub>$2</sub>')
+    .replace(/([A-Za-z\d\)])([²³])/g, '$1<sup>$2</sup>')
+    .replace(/(\w)\+\(/g, '$1<sup>+</sup>(')
+    .replace(/(\w)-\(/g, '$1<sup>-</sup>(')
+    .replace(/([A-Za-z\d])\+\+/g, '$1<sup>2+</sup>')
+    .replace(/([A-Za-z\d])\+-/g, '$1<sup>+</sup>')
+    .replace(/⁺/g, '<sup>+</sup>')
+    .replace(/⁻/g, '<sup>-</sup>')
+    .replace(/²⁺/g, '<sup>2+</sup>')
+    .replace(/²⁻/g, '<sup>2-</sup>')
+    .replace(/³⁺/g, '<sup>3+</sup>')
+    .replace(/₂/g, '<sub>2</sub>')
+    .replace(/₃/g, '<sub>3</sub>')
+    .replace(/₄/g, '<sub>4</sub>')
+    .replace(/→/g, ' → ');
+}
+
+// Confetti
+// PT inline — no modal needed
+
+function insertSym(val) {
+  const inp = document.getElementById('answerInput');
+  const start = inp.selectionStart ?? inp.value.length;
+  const end = inp.selectionEnd ?? inp.value.length;
+  const cur = inp.value;
+  inp.value = cur.slice(0, start) + val + cur.slice(end);
+  inp.selectionStart = inp.selectionEnd = start + val.length;
+  inp.focus();
+}
+
+function backspaceInput() {
+  const inp = document.getElementById('answerInput');
+  const start = inp.selectionStart;
+  const end = inp.selectionEnd;
+  if (start === 0 && end === 0) return;
+  const cur = inp.value;
+  if (start !== end) {
+    inp.value = cur.slice(0, start) + cur.slice(end);
+    inp.selectionStart = inp.selectionEnd = start;
+  } else {
+    inp.value = cur.slice(0, start - 1) + cur.slice(start);
+    inp.selectionStart = inp.selectionEnd = start - 1;
+  }
+  inp.focus();
+}
+
+function clearInput() {
+  const inp = document.getElementById('answerInput');
+  inp.value = '';
+  inp.focus();
+}
+
+// ── PERIODIC TABLE DATA ──
+// Each entry: [symbol, group_class, col (1-18), row (1-7)]
+// Empty cells use symbol='' 
+const PT = [
+  // Row 1
+  ['H','nonmetal',9,1],['He','noble',18,1],
+  // Row 2
+  ['Li','alkali',1,2],['Be','alkaline',2,2],
+  ['B','metalloid',13,2],['C','nonmetal',14,2],['N','nonmetal',15,2],['O','nonmetal',16,2],['F','halogen',17,2],['Ne','noble',18,2],
+  // Row 3
+  ['Na','alkali',1,3],['Mg','alkaline',2,3],
+  ['Al','post',13,3],['Si','metalloid',14,3],['P','nonmetal',15,3],['S','nonmetal',16,3],['Cl','halogen',17,3],['Ar','noble',18,3],
+  // Row 4
+  ['K','alkali',1,4],['Ca','alkaline',2,4],
+  ['Sc','transition',3,4],['Ti','transition',4,4],['V','transition',5,4],['Cr','transition',6,4],['Mn','transition',7,4],['Fe','transition',8,4],['Co','transition',9,4],['Ni','transition',10,4],['Cu','transition',11,4],['Zn','transition',12,4],
+  ['Ga','post',13,4],['Ge','metalloid',14,4],['As','metalloid',15,4],['Se','nonmetal',16,4],['Br','halogen',17,4],['Kr','noble',18,4],
+  // Row 5
+  ['Rb','alkali',1,5],['Sr','alkaline',2,5],
+  ['Y','transition',3,5],['Zr','transition',4,5],['Nb','transition',5,5],['Mo','transition',6,5],['Tc','transition',7,5],['Ru','transition',8,5],['Rh','transition',9,5],['Pd','transition',10,5],['Ag','transition',11,5],['Cd','transition',12,5],
+  ['In','post',13,5],['Sn','post',14,5],['Sb','metalloid',15,5],['Te','metalloid',16,5],['I','halogen',17,5],['Xe','noble',18,5],
+  // Row 6
+  ['Cs','alkali',1,6],['Ba','alkaline',2,6],
+  ['La','lanthanide',3,6],
+  ['Hf','transition',4,6],['Ta','transition',5,6],['W','transition',6,6],['Re','transition',7,6],['Os','transition',8,6],['Ir','transition',9,6],['Pt','transition',10,6],['Au','transition',11,6],['Hg','transition',12,6],
+  ['Tl','post',13,6],['Pb','post',14,6],['Bi','post',15,6],['Po','metalloid',16,6],['At','halogen',17,6],['Rn','noble',18,6],
+  // Row 7
+  ['Fr','alkali',1,7],['Ra','alkaline',2,7],
+  ['Ac','actinide',3,7],
+  ['Rf','transition',4,7],['Db','transition',5,7],['Sg','transition',6,7],['Bh','transition',7,7],['Hs','transition',8,7],['Mt','transition',9,7],['Ds','transition',10,7],['Rg','transition',11,7],['Cn','transition',12,7],
+  ['Nh','post',13,7],['Fl','post',14,7],['Mc','post',15,7],['Lv','post',16,7],['Ts','halogen',17,7],['Og','noble',18,7],
+];
+
+function buildPeriodicTable() {
+  const grid = document.getElementById('ptGrid');
+  if (!grid) return;
+  // Build 7x18 map
+  const map = {};
+  PT.forEach(([sym, cls, col, row]) => { map[`${row}-${col}`] = [sym, cls]; });
+  for (let row = 1; row <= 7; row++) {
+    for (let col = 1; col <= 18; col++) {
+      const cell = document.createElement('div');
+      const key = `${row}-${col}`;
+      if (map[key]) {
+        const [sym, cls] = map[key];
+        cell.className = `pt-cell ${cls}`;
+        cell.textContent = sym;
+        cell.title = sym;
+        cell.onclick = () => insertSym(sym);
+      } else {
+        cell.className = 'pt-cell empty';
+      }
+      grid.appendChild(cell);
+    }
+  }
+}
+
+// Build table on load
+document.addEventListener('DOMContentLoaded', buildPeriodicTable);
+
+function launchConfetti(count = 30) {
+  const container = document.getElementById('confettiContainer');
+  const colors = ['#ff6b9d','#4ecdc4','#ffd700','#6bcb77','#f4a261','#a8edea'];
+  for (let i = 0; i < count; i++) {
+    setTimeout(() => {
+      const piece = document.createElement('div');
+      piece.className = 'confetti-piece';
+      piece.style.left = Math.random() * 100 + 'vw';
+      piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+      piece.style.width = (Math.random() * 8 + 6) + 'px';
+      piece.style.height = (Math.random() * 8 + 6) + 'px';
+      piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+      piece.style.animationDuration = (Math.random() * 2 + 2) + 's';
+      piece.style.animationDelay = Math.random() * 0.5 + 's';
+      container.appendChild(piece);
+      setTimeout(() => piece.remove(), 3000);
+    }, i * 30);
+  }
+}
+
+// Enter key submit
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    if (document.getElementById('gameScreen').style.display !== 'none') {
+      const submitBtn = document.getElementById('submitBtn');
+      if (!submitBtn.disabled) checkAnswer();
+    }
+  }
+});
+</script>
+</body>
+</html>

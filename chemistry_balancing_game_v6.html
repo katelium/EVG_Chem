@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+<title>⚡ Equation Clash – EVG Chemistry</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{width:100%;height:100%;overflow:hidden;background:#1a1a2e;font-family:'Nunito',sans-serif;}
+
+/* ══ SETUP ══ */
+#setupScreen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);z-index:1000;}
+.setup-card{background:rgba(255,255,255,0.97);border-radius:28px;padding:34px 38px;width:min(540px,95vw);box-shadow:0 20px 60px rgba(0,0,0,0.4);text-align:center;}
+.setup-card h1{font-family:'Fredoka One',cursive;font-size:2.1rem;color:#1a1a2e;margin-bottom:3px;}
+.setup-school{font-family:'Fredoka One',cursive;font-size:1rem;color:#FF6B9D;margin-bottom:5px;}
+.setup-subtitle{color:#888;font-size:0.83rem;margin-bottom:20px;font-weight:600;}
+.name-row{display:flex;gap:12px;margin-bottom:14px;}
+.name-group{flex:1;text-align:left;}
+.name-group label{display:block;font-weight:800;font-size:0.78rem;margin-bottom:4px;color:#555;text-transform:uppercase;letter-spacing:0.5px;}
+.name-group input{width:100%;padding:9px 13px;border:2.5px solid #eee;border-radius:12px;font-family:'Nunito',sans-serif;font-size:1rem;font-weight:700;outline:none;transition:border-color 0.2s;}
+.name-group input:focus{border-color:#FF6B9D;}
+.name-group.p2 input:focus{border-color:#4ECDC4;}
+.setup-label{font-weight:800;font-size:0.78rem;color:#555;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:7px;text-align:left;}
+.diff-row{display:flex;gap:7px;margin-bottom:14px;}
+.diff-btn{flex:1;padding:9px 5px;border:2.5px solid #eee;border-radius:12px;background:#f9f9f9;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:800;font-size:0.8rem;transition:all 0.15s;color:#666;}
+.diff-btn.active{border-color:#a855f7;background:#f3edff;color:#7c3aed;}
+.diff-btn:active{transform:scale(0.96);}
+.qcount-row{display:flex;gap:7px;margin-bottom:22px;}
+.qc-btn{flex:1;padding:9px 5px;border:2.5px solid #eee;border-radius:12px;background:#f9f9f9;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:800;font-size:1rem;transition:all 0.15s;color:#666;}
+.qc-btn.active{border-color:#FF6B9D;background:#fff0f5;color:#FF6B9D;}
+.qc-btn:active{transform:scale(0.96);}
+.start-btn{width:100%;padding:15px;background:linear-gradient(135deg,#FF6B9D,#ff4081);border:none;border-radius:16px;color:white;font-family:'Fredoka One',cursive;font-size:1.35rem;cursor:pointer;box-shadow:0 6px 0 #c62d6d;transition:all 0.1s;}
+.start-btn:active{transform:translateY(3px);box-shadow:0 3px 0 #c62d6d;}
+
+/* ══ GAME ══ */
+#gameScreen{position:fixed;inset:0;display:none;background:#1a1a2e;}
+.game-layout{display:grid;grid-template-columns:1fr 280px 1fr;height:100vh;width:100vw;}
+
+/* ══ PLAYER PANELS ══ */
+.player-panel{display:flex;flex-direction:column;padding:9px;gap:6px;height:100vh;overflow:hidden;position:relative;}
+.p1-panel{background:linear-gradient(180deg,#2d0f1e,#1a0a12);}
+.p2-panel{background:linear-gradient(180deg,#0a1f1e,#051210);}
+
+.player-header{display:flex;align-items:center;gap:9px;padding:7px 11px;border-radius:14px;flex-shrink:0;}
+.p1-panel .player-header{background:linear-gradient(135deg,#FF6B9D22,#FF6B9D44);border:2px solid #FF6B9D55;}
+.p2-panel .player-header{background:linear-gradient(135deg,#4ECDC422,#4ECDC444);border:2px solid #4ECDC455;}
+.player-name{font-family:'Fredoka One',cursive;font-size:1.25rem;color:white;flex:1;}
+.score-badge{font-family:'Fredoka One',cursive;font-size:1.5rem;padding:3px 14px;border-radius:20px;min-width:52px;text-align:center;}
+.p1-panel .score-badge{background:#FF6B9D;color:white;box-shadow:0 4px 0 #c62d6d;}
+.p2-panel .score-badge{background:#4ECDC4;color:white;box-shadow:0 4px 0 #299e96;}
+.diff-badge{font-size:0.62rem;font-weight:800;padding:3px 7px;border-radius:7px;text-transform:uppercase;letter-spacing:0.4px;}
+.diff-easy{background:#22c55e22;color:#22c55e;border:1px solid #22c55e55;}
+.diff-medium{background:#f59e0b22;color:#f59e0b;border:1px solid #f59e0b55;}
+.diff-hard{background:#ef444422;color:#ef4444;border:1px solid #ef444455;}
+
+/* Attempt counter */
+.attempt-counter{font-size:0.65rem;font-weight:800;color:#666;text-align:center;flex-shrink:0;}
+.attempt-pips{display:flex;gap:3px;justify-content:center;margin-top:2px;}
+.pip{width:10px;height:10px;border-radius:50%;background:#ffffff18;transition:background 0.2s;}
+.pip.used{background:#ef4444;}
+.pip.remaining{background:#22c55e;}
+
+/* Question card */
+.question-card{border-radius:13px;padding:10px 13px;flex-shrink:0;display:flex;flex-direction:column;gap:5px;}
+.p1-panel .question-card{background:#FF6B9D18;border:2px solid #FF6B9D44;}
+.p2-panel .question-card{background:#4ECDC418;border:2px solid #4ECDC444;}
+.q-label{font-size:0.62rem;font-weight:800;text-transform:uppercase;letter-spacing:0.8px;color:#888;}
+.q-num{font-size:0.68rem;color:#555;font-weight:600;}
+.eq-display{display:flex;flex-wrap:wrap;align-items:center;gap:2px;font-family:'Nunito',sans-serif;font-size:0.95rem;font-weight:700;color:white;line-height:1.6;}
+.eq-coeff-box{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:24px;padding:0 4px;border-radius:6px;font-family:'Fredoka One',cursive;font-size:0.95rem;border:2px dashed;transition:all 0.2s;}
+.p1-panel .eq-coeff-box{border-color:#FF6B9D88;background:#FF6B9D18;color:#FF6B9D;}
+.p2-panel .eq-coeff-box{border-color:#4ECDC488;background:#4ECDC418;color:#4ECDC4;}
+.eq-coeff-box.filled{border-style:solid;}
+.p1-panel .eq-coeff-box.filled{background:#FF6B9D33;border-color:#FF6B9D;}
+.p2-panel .eq-coeff-box.filled{background:#4ECDC433;border-color:#4ECDC4;}
+.eq-coeff-box.wrong-slot{border-color:#ef4444!important;background:#ef444440!important;color:#ff8080!important;border-style:solid!important;box-shadow:0 0 6px #ef444466;}
+.eq-coeff-box.active-slot{animation:slotPulse 0.9s ease infinite;}
+@keyframes slotPulse{0%,100%{box-shadow:0 0 0 0 transparent;}50%{box-shadow:0 0 0 3px currentColor;}}
+@keyframes wobble{0%{transform:translateX(0);}25%{transform:translateX(-4px);}75%{transform:translateX(4px);}100%{transform:translateX(0);}}
+.eq-formula{color:white;font-size:0.92rem;}
+.eq-arrow{color:#777;font-size:1rem;padding:0 2px;}
+.eq-plus{color:#555;font-size:0.95rem;padding:0 1px;}
+
+/* Hint / Feedback box — multi-line, scrollable hint */
+.hint-box{
+  border-radius:11px;padding:8px 11px;font-size:0.75rem;font-weight:700;
+  min-height:38px;flex-shrink:0;line-height:1.5;transition:all 0.3s;
+  white-space:pre-line;
+}
+.hint-empty{background:transparent;color:transparent;border:1px solid transparent;}
+.hint-correct{background:#22c55e22;color:#4ade80;border:1px solid #22c55e44;}
+.hint-nudge{background:#f59e0b18;color:#fbbf24;border:1px solid #f59e0b44;}
+.hint-guide{background:#6366f118;color:#a5b4fc;border:1px solid #6366f144;}
+.hint-warn{background:#ef444418;color:#fca5a5;border:1px solid #ef444444;}
+.hint-skip{background:#47556922;color:#94a3b8;border:1px solid #47556944;}
+
+/* Slot indicator */
+.slot-indicator{display:flex;gap:4px;align-items:center;flex-wrap:wrap;padding:4px 7px;border-radius:8px;font-size:0.68rem;font-weight:700;flex-shrink:0;}
+.p1-panel .slot-indicator{background:#FF6B9D0d;border:1px solid #FF6B9D22;}
+.p2-panel .slot-indicator{background:#4ECDC40d;border:1px solid #4ECDC422;}
+.slot-dot{width:18px;height:18px;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;font-size:0.62rem;font-weight:800;transition:all 0.2s;cursor:pointer;}
+.slot-dot.empty{background:#ffffff0f;color:#555;}
+.slot-dot.active-dot{background:#a855f7;color:white;box-shadow:0 0 6px #a855f7;}
+.slot-dot.filled-dot{background:#22c55e;color:white;}
+.slot-dot.wrong-dot{background:#ef4444;color:white;}
+
+/* Keyboard */
+.keyboard{flex-shrink:0;}
+.kb-section{margin-bottom:5px;}
+.kb-section-label{font-size:0.58rem;font-weight:800;text-transform:uppercase;letter-spacing:0.8px;color:#444;margin-bottom:3px;padding-left:2px;}
+.kb-row{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:3px;}
+.kb-key{padding:7px 9px;border-radius:9px;border:none;cursor:pointer;font-family:'Fredoka One',cursive;font-size:0.95rem;font-weight:800;min-width:34px;text-align:center;transition:transform 0.08s,box-shadow 0.08s;color:white;line-height:1;flex-shrink:0;}
+.kb-key:active{transform:scale(0.88) translateY(2px);}
+.kb-key.locked{opacity:0.22;pointer-events:none;}
+.kb-nav{background:#6366f1;box-shadow:0 3px 0 #4338ca;font-size:0.75rem;padding:7px 8px;}
+.kb-num{background:#8b5cf6;box-shadow:0 3px 0 #6d28d9;}
+.kb-del{background:#ef4444;box-shadow:0 3px 0 #b91c1c;font-size:0.8rem;}
+.kb-submit{background:#FF6B9D;box-shadow:0 3px 0 #c62d6d;padding:7px 16px;font-size:0.9rem;}
+.p2-panel .kb-submit{background:#4ECDC4;box-shadow:0 3px 0 #299e96;color:#0a1f1e;}
+.kb-clr{background:#f59e0b;box-shadow:0 3px 0 #d97706;color:#1a1a2e;font-size:0.75rem;padding:7px 7px;}
+.kb-skip{background:#334155;box-shadow:0 3px 0 #1e293b;font-size:0.72rem;padding:7px 7px;}
+
+/* History */
+.history-log-label{font-size:0.58rem;font-weight:800;text-transform:uppercase;letter-spacing:0.8px;color:#333;}
+.history-log{flex:1;overflow-y:auto;border-radius:9px;padding:5px;scrollbar-width:thin;min-height:0;}
+.p1-panel .history-log{background:#FF6B9D08;border:1px solid #FF6B9D1a;}
+.p2-panel .history-log{background:#4ECDC408;border:1px solid #4ECDC41a;}
+.history-log::-webkit-scrollbar{width:3px;}
+.p1-panel .history-log::-webkit-scrollbar-thumb{background:#FF6B9D44;}
+.p2-panel .history-log::-webkit-scrollbar-thumb{background:#4ECDC444;}
+.history-item{font-size:0.66rem;padding:5px 7px;border-radius:7px;margin-bottom:4px;line-height:1.4;font-weight:600;}
+.history-correct{background:#22c55e18;color:#4ade80;border-left:3px solid #22c55e;}
+.history-wrong{background:#ef444418;color:#fca5a5;border-left:3px solid #ef4444;}
+.history-skip{background:#47556918;color:#94a3b8;border-left:3px solid #475569;}
+.history-attempt{font-size:0.62rem;margin-top:2px;padding:1px 4px;border-left:1px solid #ffffff18;}
+.history-attempt.h-wrong{color:#f87171;}
+.history-attempt.h-correct{color:#86efac;}
+.history-q-label{font-size:0.6rem;font-weight:800;color:#555;margin-bottom:2px;}
+
+/* Atom balance bar — Easy mode only */
+.atom-bar{display:flex;flex-wrap:wrap;gap:4px;padding:5px 7px;border-radius:9px;flex-shrink:0;align-items:center;}
+.p1-panel .atom-bar{background:#FF6B9D0a;border:1px solid #FF6B9D1a;}
+.p2-panel .atom-bar{background:#4ECDC40a;border:1px solid #4ECDC41a;}
+.atom-bar.hidden{display:none;}
+.atom-pill{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:20px;font-size:0.72rem;font-weight:800;font-family:'Nunito',sans-serif;transition:all 0.25s;}
+.atom-pill.balanced{background:#22c55e22;border:1.5px solid #22c55e77;color:#4ade80;}
+.atom-pill.unbalanced{background:#ef444422;border:1.5px solid #ef444477;color:#fca5a5;}
+.atom-pill.empty{background:#ffffff08;border:1.5px solid #ffffff18;color:#444;}
+.atom-el{font-weight:900;}
+.atom-counts{font-size:0.68rem;font-weight:700;}
+.atom-sep{color:#555;font-size:0.65rem;margin:0 1px;}
+.atom-bar-label{font-size:0.58rem;font-weight:800;color:#444;text-transform:uppercase;letter-spacing:0.5px;width:100%;margin-bottom:1px;}
+
+/* Game over teacher banner */
+.game-over-banner{display:none;flex-direction:column;align-items:center;gap:8px;width:100%;padding:10px;border-radius:14px;background:linear-gradient(135deg,#1e1e3a,#2a1a2e);border:2px solid #FF6B9D55;text-align:center;}
+.game-over-title{font-family:'Fredoka One',cursive;font-size:1rem;color:white;}
+.game-over-sub{font-size:0.68rem;font-weight:700;color:#888;line-height:1.4;}
+.end-game-btn{padding:10px 20px;background:linear-gradient(135deg,#FF6B9D,#4ECDC4);border:none;border-radius:12px;color:white;font-family:'Fredoka One',cursive;font-size:1rem;cursor:pointer;box-shadow:0 4px 0 #0006;transition:all 0.1s;width:100%;}
+.end-game-btn:active{transform:translateY(2px);box-shadow:0 2px 0 #0006;}
+
+/* Panel flash */
+.panel-flash{position:absolute;inset:0;pointer-events:none;z-index:100;opacity:0;transition:opacity 0.1s;}
+.flash-green{background:rgba(34,197,94,0.22);}
+.flash-orange{background:rgba(245,158,11,0.22);}
+.flash-active{opacity:1;}
+
+/* ══ CENTRE ══ */
+.centre-col{background:linear-gradient(180deg,#0f0f23,#12122a);display:flex;flex-direction:column;align-items:center;padding:10px 8px;gap:6px;border-left:1px solid #ffffff08;border-right:1px solid #ffffff08;overflow:hidden;}
+.centre-title{font-family:'Fredoka One',cursive;font-size:1.1rem;color:white;text-align:center;letter-spacing:1px;}
+.vs-badge{font-family:'Fredoka One',cursive;font-size:1.8rem;background:linear-gradient(135deg,#FF6B9D,#4ECDC4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.power-bars-wrap{width:100%;display:flex;flex-direction:column;gap:6px;}
+.pb-row{display:flex;align-items:center;gap:5px;}
+.pb-label{font-family:'Fredoka One',cursive;font-size:0.72rem;width:42px;text-align:center;flex-shrink:0;}
+.pb-label.p1-label{color:#FF6B9D;}
+.pb-label.p2-label{color:#4ECDC4;}
+.pb-track{flex:1;height:20px;background:#ffffff10;border-radius:11px;overflow:hidden;}
+.pb-fill{height:100%;border-radius:11px;transition:width 0.4s cubic-bezier(0.34,1.56,0.64,1);position:relative;overflow:hidden;}
+.pb-fill::after{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.28),transparent);animation:shimmer 2s infinite;}
+@keyframes shimmer{0%{left:-100%;}100%{left:100%;}}
+.p1-fill{background:linear-gradient(90deg,#FF6B9D,#ff4081);}
+.p2-fill{background:linear-gradient(90deg,#4ECDC4,#26b5ac);}
+.pb-score{font-family:'Fredoka One',cursive;font-size:0.88rem;width:28px;text-align:center;flex-shrink:0;}
+.pb-score.p1-sc{color:#FF6B9D;}
+.pb-score.p2-sc{color:#4ECDC4;}
+.pb-fill.flash-bar{animation:barFlash 0.45s ease;}
+@keyframes barFlash{0%{filter:brightness(1);}50%{filter:brightness(2.5);}100%{filter:brightness(1);}}
+.winning-banner{font-family:'Fredoka One',cursive;font-size:0.72rem;text-align:center;padding:5px 8px;border-radius:9px;min-height:24px;transition:all 0.3s;}
+.winning-banner.p1-winning{background:#FF6B9D22;color:#FF6B9D;border:1px solid #FF6B9D44;}
+.winning-banner.p2-winning{background:#4ECDC422;color:#4ECDC4;border:1px solid #4ECDC444;}
+.winning-banner.tied{background:#ffffff0f;color:#777;border:1px solid #ffffff1a;}
+#scoreboardCanvas{border-radius:15px;width:100%;flex-shrink:0;}
+.round-count{font-family:'Fredoka One',cursive;font-size:1.05rem;color:#777;text-align:center;}
+.round-info{text-align:center;font-size:0.68rem;font-weight:700;color:#3a3a5a;}
+
+/* ══ FX ══ */
+.cheer-bubble{position:fixed;pointer-events:none;z-index:9000;font-family:'Fredoka One',cursive;font-size:1.25rem;background:white;border-radius:20px;padding:6px 15px;box-shadow:0 8px 24px rgba(0,0,0,0.3);animation:cheerPop 1.6s ease forwards;white-space:nowrap;}
+@keyframes cheerPop{0%{transform:scale(0) translateY(0);opacity:0;}20%{transform:scale(1.2) translateY(-20px);opacity:1;}70%{transform:scale(1) translateY(-50px);opacity:1;}100%{transform:scale(0.8) translateY(-80px);opacity:0;}}
+.particle{position:fixed;pointer-events:none;z-index:8999;font-size:1.1rem;animation:particleFly 1.2s ease forwards;}
+@keyframes particleFly{0%{transform:translate(0,0) scale(1);opacity:1;}100%{transform:translate(var(--dx),var(--dy)) scale(0);opacity:0;}}
+.confetti-piece{position:fixed;pointer-events:none;z-index:8998;width:8px;height:8px;border-radius:2px;animation:confettiFall var(--dur) ease forwards;}
+@keyframes confettiFall{0%{transform:translateY(var(--sy)) rotate(0deg);opacity:1;}100%{transform:translateY(calc(var(--sy) + 600px)) rotate(720deg);opacity:0;}}
+
+/* ══ END ══ */
+#endScreen{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.85);z-index:2000;backdrop-filter:blur(8px);}
+.end-card{background:linear-gradient(135deg,#1a1a2e,#16213e);border:2px solid #ffffff22;border-radius:28px;padding:38px;text-align:center;max-width:480px;width:95vw;}
+.end-trophy{font-size:4rem;animation:trophyBounce 0.8s ease infinite alternate;}
+@keyframes trophyBounce{from{transform:translateY(0) rotate(-5deg);}to{transform:translateY(-10px) rotate(5deg);}}
+.end-winner{font-family:'Fredoka One',cursive;font-size:2.1rem;color:white;margin:8px 0;}
+.end-scores{display:flex;gap:14px;justify-content:center;margin:14px 0;}
+.end-score-box{padding:11px 22px;border-radius:14px;font-family:'Fredoka One',cursive;font-size:1.3rem;}
+.end-score-box.p1-box{background:#FF6B9D22;color:#FF6B9D;border:2px solid #FF6B9D55;}
+.end-score-box.p2-box{background:#4ECDC422;color:#4ECDC4;border:2px solid #4ECDC455;}
+.play-again-btn{margin-top:18px;padding:13px 38px;background:linear-gradient(135deg,#FF6B9D,#4ECDC4);border:none;border-radius:14px;color:white;font-family:'Fredoka One',cursive;font-size:1.25rem;cursor:pointer;box-shadow:0 6px 0 #0008;transition:all 0.1s;}
+.play-again-btn:active{transform:translateY(3px);box-shadow:0 3px 0 #0008;}
+</style>
+</head>
+<body>
+
+<!-- ══ SETUP ══ -->
+<div id="setupScreen">
+  <div class="setup-card">
+    <h1>⚡ Equation Clash</h1>
+    <div class="setup-school">🏫 Evergreen Secondary School – Chemistry</div>
+    <div class="setup-subtitle">Balancing Chemical Equations · Two-Player Battle</div>
+    <div class="name-row">
+      <div class="name-group"><label>🩷 Player 1</label><input type="text" id="p1name" placeholder="e.g. Alex" maxlength="16"></div>
+      <div class="name-group p2"><label>💚 Player 2</label><input type="text" id="p2name" placeholder="e.g. Sam" maxlength="16"></div>
+    </div>
+    <div class="setup-label">Difficulty</div>
+    <div class="diff-row" id="diffRow">
+      <button class="diff-btn active" data-diff="easy">🟢 Easy<br><span style="font-size:0.7rem;font-weight:600">Simple</span></button>
+      <button class="diff-btn" data-diff="medium">🟡 Medium<br><span style="font-size:0.7rem;font-weight:600">Moderate</span></button>
+      <button class="diff-btn" data-diff="hard">🔴 Hard<br><span style="font-size:0.7rem;font-weight:600">Complex</span></button>
+      <button class="diff-btn" data-diff="all">🌈 Mixed<br><span style="font-size:0.7rem;font-weight:600">Easy→Hard</span></button>
+    </div>
+    <div class="setup-label">Questions Per Player</div>
+    <div class="qcount-row">
+      <button class="qc-btn active" data-q="5">5</button>
+      <button class="qc-btn" data-q="10">10</button>
+      <button class="qc-btn" data-q="15">15</button>
+      <button class="qc-btn" data-q="20">20</button>
+    </div>
+    <button class="start-btn" onclick="startGame()">⚡ START BATTLE!</button>
+  </div>
+</div>
+
+<!-- ══ GAME ══ -->
+<div id="gameScreen">
+  <div class="game-layout">
+
+    <!-- P1 -->
+    <div class="player-panel p1-panel" id="p1Panel">
+      <div class="panel-flash flash-green" id="p1FlashGreen"></div>
+      <div class="panel-flash flash-orange" id="p1FlashOrange"></div>
+      <div class="player-header">
+        <div class="player-name" id="p1NameDisplay">Player 1</div>
+        <div class="diff-badge diff-easy" id="p1DiffBadge">Easy</div>
+        <div class="score-badge" id="p1Score">0</div>
+      </div>
+      <div class="question-card">
+        <div class="q-label">Fill in the coefficients to balance:</div>
+        <div class="eq-display" id="p1EqDisplay"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div class="q-num" id="p1QNum">Q1</div>
+          <div class="attempt-counter" id="p1AttemptCounter"></div>
+        </div>
+      </div>
+      <div class="slot-indicator" id="p1SlotIndicator"></div>
+      <div class="atom-bar hidden" id="p1AtomBar"></div>
+      <div class="hint-box hint-empty" id="p1Hint"></div>
+      <div class="keyboard" id="p1Keyboard"></div>
+      <div class="history-log-label">📋 History</div>
+      <div class="history-log" id="p1History"></div>
+    </div>
+
+    <!-- CENTRE -->
+    <div class="centre-col">
+      <div class="centre-title">⚡ EQUATION CLASH</div>
+      <div class="vs-badge">VS</div>
+      <div class="power-bars-wrap">
+        <div class="pb-row">
+          <div class="pb-label p1-label" id="pbP1Name">P1</div>
+          <div class="pb-track"><div class="pb-fill p1-fill" id="p1PBar" style="width:0%"></div></div>
+          <div class="pb-score p1-sc" id="pbP1Score">0</div>
+        </div>
+        <div class="pb-row">
+          <div class="pb-label p2-label" id="pbP2Name">P2</div>
+          <div class="pb-track"><div class="pb-fill p2-fill" id="p2PBar" style="width:0%"></div></div>
+          <div class="pb-score p2-sc" id="pbP2Score">0</div>
+        </div>
+      </div>
+      <div class="winning-banner tied" id="winningBanner">⚡ Game On!</div>
+      <div class="game-over-banner" id="gameOverBanner">
+        <div class="game-over-title">🏁 Both Players Finished!</div>
+        <div class="game-over-sub">Review each player's history log<br>before ending the game.</div>
+        <button class="end-game-btn" onclick="showEnd()">📊 Show Final Results</button>
+      </div>
+      <canvas id="scoreboardCanvas" width="260" height="200"></canvas>
+      <div class="round-count" id="roundCount">Round 1</div>
+      <div class="round-info" id="roundInfo">P1 on Q1 · P2 on Q1</div>
+      <div style="display:flex;gap:4px;justify-content:center;margin-top:2px;">
+        <span style="font-size:0.58rem;padding:2px 7px;border-radius:5px;background:#22c55e22;color:#22c55e;font-weight:800;">🟢 Easy</span>
+        <span style="font-size:0.58rem;padding:2px 7px;border-radius:5px;background:#f59e0b22;color:#f59e0b;font-weight:800;">🟡 Med</span>
+        <span style="font-size:0.58rem;padding:2px 7px;border-radius:5px;background:#ef444422;color:#ef4444;font-weight:800;">🔴 Hard</span>
+      </div>
+      <div style="flex:1;"></div>
+      <div style="font-size:0.58rem;color:#2a2a4a;text-align:center;font-weight:600;">EVG Chemistry · Mrs Priscilia Eng</div>
+    </div>
+
+    <!-- P2 -->
+    <div class="player-panel p2-panel" id="p2Panel">
+      <div class="panel-flash flash-green" id="p2FlashGreen"></div>
+      <div class="panel-flash flash-orange" id="p2FlashOrange"></div>
+      <div class="player-header">
+        <div class="score-badge" id="p2Score">0</div>
+        <div class="diff-badge diff-easy" id="p2DiffBadge">Easy</div>
+        <div class="player-name" id="p2NameDisplay" style="text-align:right;">Player 2</div>
+      </div>
+      <div class="question-card">
+        <div class="q-label">Fill in the coefficients to balance:</div>
+        <div class="eq-display" id="p2EqDisplay"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div class="q-num" id="p2QNum">Q1</div>
+          <div class="attempt-counter" id="p2AttemptCounter"></div>
+        </div>
+      </div>
+      <div class="slot-indicator" id="p2SlotIndicator"></div>
+      <div class="atom-bar hidden" id="p2AtomBar"></div>
+      <div class="hint-box hint-empty" id="p2Hint"></div>
+      <div class="keyboard" id="p2Keyboard"></div>
+      <div class="history-log-label">📋 History</div>
+      <div class="history-log" id="p2History"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ END ══ -->
+<div id="endScreen">
+  <div class="end-card">
+    <div class="end-trophy">🏆</div>
+    <div class="end-winner" id="endWinner">Player 1 Wins!</div>
+    <div class="end-scores">
+      <div class="end-score-box p1-box"><span id="endP1Name">P1</span><br><span id="endP1Score">0</span> pts</div>
+      <div class="end-score-box p2-box"><span id="endP2Name">P2</span><br><span id="endP2Score">0</span> pts</div>
+    </div>
+    <button class="play-again-btn" onclick="playAgain()">🔄 Play Again</button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+// QUESTION BANK
+// skeleton:  uses __ for each coefficient slot
+// correct:   array of correct integer coefficients
+// compounds: array of objects, one per __ slot, each with:
+//            { side: 'L'|'R', atoms: {El: count, ...} }
+//            atoms are the RAW counts IN THAT COMPOUND (before multiplying by coeff)
+// diff:      'easy' | 'medium' | 'hard'
+// ══════════════════════════════════════════════════════
+function Q(skeleton, correct, diff, compounds){
+  const parts=[];
+  const raw=skeleton.split('__');
+  for(let i=0;i<raw.length;i++){
+    if(i>0) parts.push({type:'coeff',idx:i-1,val:correct[i-1]});
+    if(raw[i]) parts.push({type:'text',val:raw[i]});
+  }
+  return {parts, correct, diff, compounds};
+}
+
+// ── Exact atom counter ──────────────────────────────────
+// Given student coefficients, returns {El: {L: totalLeft, R: totalRight}} for every element
+function countAtoms(q, coeffs){
+  const totals = {};
+  q.compounds.forEach((cmp, i)=>{
+    const coeff = coeffs[i] || 1;
+    for(const [el, cnt] of Object.entries(cmp.atoms)){
+      if(!totals[el]) totals[el]={L:0,R:0};
+      totals[el][cmp.side] += coeff * cnt;
+    }
+  });
+  return totals;
+}
+
+// Returns array of imbalanced elements: [{name, left, right}, ...]  sorted worst-first
+function getImbalances(q, coeffs){
+  const totals = countAtoms(q, coeffs);
+  const issues = [];
+  for(const [el, {L,R}] of Object.entries(totals)){
+    if(L !== R) issues.push({name:el, left:L, right:R, gap:Math.abs(L-R)});
+  }
+  issues.sort((a,b)=>b.gap-a.gap);
+  return issues;
+}
+
+const ALL_QUESTIONS=[
+  // ── EASY ──
+  Q("__C + __O₂ → __CO₂",           [1,1,1],"easy",
+    [{side:'L',atoms:{C:1}},{side:'L',atoms:{O:2}},{side:'R',atoms:{C:1,O:2}}]),
+
+  Q("__H₂ + __O₂ → __H₂O",          [2,1,2],"easy",
+    [{side:'L',atoms:{H:2}},{side:'L',atoms:{O:2}},{side:'R',atoms:{H:2,O:1}}]),
+
+  Q("__Mg + __Cl₂ → __MgCl₂",       [1,1,1],"easy",
+    [{side:'L',atoms:{Mg:1}},{side:'L',atoms:{Cl:2}},{side:'R',atoms:{Mg:1,Cl:2}}]),
+
+  Q("__Na + __Cl₂ → __NaCl",        [2,1,2],"easy",
+    [{side:'L',atoms:{Na:1}},{side:'L',atoms:{Cl:2}},{side:'R',atoms:{Na:1,Cl:1}}]),
+
+  Q("__HCl + __NaOH → __NaCl + __H₂O",[1,1,1,1],"easy",
+    [{side:'L',atoms:{H:1,Cl:1}},{side:'L',atoms:{Na:1,O:1,H:1}},{side:'R',atoms:{Na:1,Cl:1}},{side:'R',atoms:{H:2,O:1}}]),
+
+  Q("__N₂ + __H₂ → __NH₃",          [1,3,2],"easy",
+    [{side:'L',atoms:{N:2}},{side:'L',atoms:{H:2}},{side:'R',atoms:{N:1,H:3}}]),
+
+  Q("__Na + __O₂ → __Na₂O",         [4,1,2],"easy",
+    [{side:'L',atoms:{Na:1}},{side:'L',atoms:{O:2}},{side:'R',atoms:{Na:2,O:1}}]),
+
+  Q("__CH₄ + __O₂ → __CO₂ + __H₂O", [1,2,1,2],"easy",
+    [{side:'L',atoms:{C:1,H:4}},{side:'L',atoms:{O:2}},{side:'R',atoms:{C:1,O:2}},{side:'R',atoms:{H:2,O:1}}]),
+
+  Q("__H₂ + __O₂ → __H₂O₂",        [1,1,1],"easy",
+    [{side:'L',atoms:{H:2}},{side:'L',atoms:{O:2}},{side:'R',atoms:{H:2,O:2}}]),
+
+  Q("__KOH + __HBr → __KBr + __H₂O",[1,1,1,1],"easy",
+    [{side:'L',atoms:{K:1,O:1,H:1}},{side:'L',atoms:{H:1,Br:1}},{side:'R',atoms:{K:1,Br:1}},{side:'R',atoms:{H:2,O:1}}]),
+
+  Q("__Na + __O₂ → __Na₂O₂",       [2,1,1],"easy",
+    [{side:'L',atoms:{Na:1}},{side:'L',atoms:{O:2}},{side:'R',atoms:{Na:2,O:2}}]),
+
+  Q("__Rb + __P → __Rb₃P",          [3,1,1],"easy",
+    [{side:'L',atoms:{Rb:1}},{side:'L',atoms:{P:1}},{side:'R',atoms:{Rb:3,P:1}}]),
+
+  Q("__NH₃ + __HCl → __NH₄Cl",     [1,1,1],"easy",
+    [{side:'L',atoms:{N:1,H:3}},{side:'L',atoms:{H:1,Cl:1}},{side:'R',atoms:{N:1,H:4,Cl:1}}]),
+
+  Q("__Li + __H₂O → __LiOH + __H₂", [2,2,2,1],"easy",
+    [{side:'L',atoms:{Li:1}},{side:'L',atoms:{H:2,O:1}},{side:'R',atoms:{Li:1,O:1,H:1}},{side:'R',atoms:{H:2}}]),
+
+  Q("__Li + __AlCl₃ → __LiCl + __Al",[3,1,3,1],"easy",
+    [{side:'L',atoms:{Li:1}},{side:'L',atoms:{Al:1,Cl:3}},{side:'R',atoms:{Li:1,Cl:1}},{side:'R',atoms:{Al:1}}]),
+
+  Q("__Cs + __N₂ → __Cs₃N",        [6,1,2],"easy",
+    [{side:'L',atoms:{Cs:1}},{side:'L',atoms:{N:2}},{side:'R',atoms:{Cs:3,N:1}}]),
+
+  Q("__C + __S₈ → __CS₂",           [4,1,4],"easy",
+    [{side:'L',atoms:{C:1}},{side:'L',atoms:{S:8}},{side:'R',atoms:{C:1,S:2}}]),
+
+  Q("__N₂ + __O₂ → __N₂O₅",        [2,5,2],"easy",
+    [{side:'L',atoms:{N:2}},{side:'L',atoms:{O:2}},{side:'R',atoms:{N:2,O:5}}]),
+
+  Q("__C₃H₈ + __O₂ → __CO₂ + __H₂O",[1,5,3,4],"easy",
+    [{side:'L',atoms:{C:3,H:8}},{side:'L',atoms:{O:2}},{side:'R',atoms:{C:1,O:2}},{side:'R',atoms:{H:2,O:1}}]),
+
+  Q("__C + __O₂ → __CO",            [2,1,2],"easy",
+    [{side:'L',atoms:{C:1}},{side:'L',atoms:{O:2}},{side:'R',atoms:{C:1,O:1}}]),
+
+  // ── MEDIUM ──
+  Q("__H₃PO₄ + __KOH → __K₃PO₄ + __H₂O",           [1,3,1,3],"medium",
+    [{side:'L',atoms:{H:3,P:1,O:4}},{side:'L',atoms:{K:1,O:1,H:1}},{side:'R',atoms:{K:3,P:1,O:4}},{side:'R',atoms:{H:2,O:1}}]),
+
+  Q("__NaOH + __H₂CO₃ → __Na₂CO₃ + __H₂O",         [2,1,1,2],"medium",
+    [{side:'L',atoms:{Na:1,O:1,H:1}},{side:'L',atoms:{H:2,C:1,O:3}},{side:'R',atoms:{Na:2,C:1,O:3}},{side:'R',atoms:{H:2,O:1}}]),
+
+  Q("__Al(OH)₃ + __HBr → __AlBr₃ + __H₂O",         [1,3,1,3],"medium",
+    [{side:'L',atoms:{Al:1,O:3,H:3}},{side:'L',atoms:{H:1,Br:1}},{side:'R',atoms:{Al:1,Br:3}},{side:'R',atoms:{H:2,O:1}}]),
+
+  Q("__Al(OH)₃ + __H₂CO₃ → __Al₂(CO₃)₃ + __H₂O",  [2,3,1,6],"medium",
+    [{side:'L',atoms:{Al:1,O:3,H:3}},{side:'L',atoms:{H:2,C:1,O:3}},{side:'R',atoms:{Al:2,C:3,O:9}},{side:'R',atoms:{H:2,O:1}}]),
+
+  Q("__Al(OH)₃ + __H₂SO₄ → __Al₂(SO₄)₃ + __H₂O",  [2,3,1,6],"medium",
+    [{side:'L',atoms:{Al:1,O:3,H:3}},{side:'L',atoms:{H:2,S:1,O:4}},{side:'R',atoms:{Al:2,S:3,O:12}},{side:'R',atoms:{H:2,O:1}}]),
+
+  Q("__Na + __NaNO₃ → __Na₂O + __N₂",               [10,2,6,1],"medium",
+    [{side:'L',atoms:{Na:1}},{side:'L',atoms:{Na:1,N:1,O:3}},{side:'R',atoms:{Na:2,O:1}},{side:'R',atoms:{N:2}}]),
+
+  Q("__H₃PO₄ + __Mg(OH)₂ → __Mg₃(PO₄)₂ + __H₂O",  [2,3,1,6],"medium",
+    [{side:'L',atoms:{H:3,P:1,O:4}},{side:'L',atoms:{Mg:1,O:2,H:2}},{side:'R',atoms:{Mg:3,P:2,O:8}},{side:'R',atoms:{H:2,O:1}}]),
+
+  Q("__K + __B₂O₃ → __K₂O + __B",                   [6,1,3,2],"medium",
+    [{side:'L',atoms:{K:1}},{side:'L',atoms:{B:2,O:3}},{side:'R',atoms:{K:2,O:1}},{side:'R',atoms:{B:1}}]),
+
+  Q("__C₂H₆ + __O₂ → __CO₂ + __H₂O",               [2,7,4,6],"medium",
+    [{side:'L',atoms:{C:2,H:6}},{side:'L',atoms:{O:2}},{side:'R',atoms:{C:1,O:2}},{side:'R',atoms:{H:2,O:1}}]),
+
+  Q("__C₆H₆ + __O₂ → __CO₂ + __H₂O",               [2,15,12,6],"medium",
+    [{side:'L',atoms:{C:6,H:6}},{side:'L',atoms:{O:2}},{side:'R',atoms:{C:1,O:2}},{side:'R',atoms:{H:2,O:1}}]),
+
+  Q("__C₄H₁₀ + __O₂ → __CO₂ + __H₂O",              [2,13,8,10],"medium",
+    [{side:'L',atoms:{C:4,H:10}},{side:'L',atoms:{O:2}},{side:'R',atoms:{C:1,O:2}},{side:'R',atoms:{H:2,O:1}}]),
+
+  Q("__Rb + __RbNO₃ → __Rb₂O + __N₂",               [10,2,6,1],"medium",
+    [{side:'L',atoms:{Rb:1}},{side:'L',atoms:{Rb:1,N:1,O:3}},{side:'R',atoms:{Rb:2,O:1}},{side:'R',atoms:{N:2}}]),
+
+  Q("__Rb + __S₈ → __Rb₂S",                         [16,1,8],"medium",
+    [{side:'L',atoms:{Rb:1}},{side:'L',atoms:{S:8}},{side:'R',atoms:{Rb:2,S:1}}]),
+
+  Q("__NH₄OH + __H₃PO₄ → __(NH₄)₃PO₄ + __H₂O",    [3,1,1,3],"medium",
+    [{side:'L',atoms:{N:1,H:5,O:1}},{side:'L',atoms:{H:3,P:1,O:4}},{side:'R',atoms:{N:3,H:12,P:1,O:4}},{side:'R',atoms:{H:2,O:1}}]),
+
+  Q("__H₃PO₄ + __Ca(OH)₂ → __Ca₃(PO₄)₂ + __H₂O",  [2,3,1,6],"medium",
+    [{side:'L',atoms:{H:3,P:1,O:4}},{side:'L',atoms:{Ca:1,O:2,H:2}},{side:'R',atoms:{Ca:3,P:2,O:8}},{side:'R',atoms:{H:2,O:1}}]),
+
+  Q("__Al + __S₈ → __Al₂S₃",                        [16,3,8],"medium",
+    [{side:'L',atoms:{Al:1}},{side:'L',atoms:{S:8}},{side:'R',atoms:{Al:2,S:3}}]),
+
+  Q("__NH₃ + __O₂ → __N₂ + __H₂O",                 [4,3,2,6],"medium",
+    [{side:'L',atoms:{N:1,H:3}},{side:'L',atoms:{O:2}},{side:'R',atoms:{N:2}},{side:'R',atoms:{H:2,O:1}}]),
+
+  Q("__Fe + __O₂ → __Fe₂O₃",                        [4,3,2],"medium",
+    [{side:'L',atoms:{Fe:1}},{side:'L',atoms:{O:2}},{side:'R',atoms:{Fe:2,O:3}}]),
+
+  Q("__Ca + __H₂O → __Ca(OH)₂ + __H₂",             [1,2,1,1],"medium",
+    [{side:'L',atoms:{Ca:1}},{side:'L',atoms:{H:2,O:1}},{side:'R',atoms:{Ca:1,O:2,H:2}},{side:'R',atoms:{H:2}}]),
+
+  Q("__Al + __O₂ → __Al₂O₃",                        [4,3,2],"medium",
+    [{side:'L',atoms:{Al:1}},{side:'L',atoms:{O:2}},{side:'R',atoms:{Al:2,O:3}}]),
+
+  Q("__C₁₀H₂₂ + __O₂ → __CO₂ + __H₂O",             [2,31,20,22],"medium",
+    [{side:'L',atoms:{C:10,H:22}},{side:'L',atoms:{O:2}},{side:'R',atoms:{C:1,O:2}},{side:'R',atoms:{H:2,O:1}}]),
+
+  // ── HARD ──
+  Q("__FeS₂ + __O₂ → __Fe₂O₃ + __SO₂",             [4,11,2,8],"hard",
+    [{side:'L',atoms:{Fe:1,S:2}},{side:'L',atoms:{O:2}},{side:'R',atoms:{Fe:2,O:3}},{side:'R',atoms:{S:1,O:2}}]),
+
+  Q("__C + __SO₂ → __CS₂ + __CO",                   [5,2,1,4],"hard",
+    [{side:'L',atoms:{C:1}},{side:'L',atoms:{S:1,O:2}},{side:'R',atoms:{C:1,S:2}},{side:'R',atoms:{C:1,O:1}}]),
+
+  Q("__Ca₃(PO₄)₂ + __SiO₂ + __C → __CaSiO₃ + __CO + __P",[1,3,5,3,5,2],"hard",
+    [{side:'L',atoms:{Ca:3,P:2,O:8}},{side:'L',atoms:{Si:1,O:2}},{side:'L',atoms:{C:1}},{side:'R',atoms:{Ca:1,Si:1,O:3}},{side:'R',atoms:{C:1,O:1}},{side:'R',atoms:{P:1}}]),
+
+  Q("__Fe₂O₃ + __CO → __Fe + __CO₂",               [1,3,2,3],"hard",
+    [{side:'L',atoms:{Fe:2,O:3}},{side:'L',atoms:{C:1,O:1}},{side:'R',atoms:{Fe:1}},{side:'R',atoms:{C:1,O:2}}]),
+
+  Q("__MnO₂ + __HCl → __MnCl₂ + __Cl₂ + __H₂O",   [1,4,1,1,2],"hard",
+    [{side:'L',atoms:{Mn:1,O:2}},{side:'L',atoms:{H:1,Cl:1}},{side:'R',atoms:{Mn:1,Cl:2}},{side:'R',atoms:{Cl:2}},{side:'R',atoms:{H:2,O:1}}]),
+
+  Q("__Fe₃O₄ + __H₂ → __Fe + __H₂O",               [1,4,3,4],"hard",
+    [{side:'L',atoms:{Fe:3,O:4}},{side:'L',atoms:{H:2}},{side:'R',atoms:{Fe:1}},{side:'R',atoms:{H:2,O:1}}]),
+
+  Q("__CaCO₃ + __HCl → __CaCl₂ + __CO₂ + __H₂O",  [1,2,1,1,1],"hard",
+    [{side:'L',atoms:{Ca:1,C:1,O:3}},{side:'L',atoms:{H:1,Cl:1}},{side:'R',atoms:{Ca:1,Cl:2}},{side:'R',atoms:{C:1,O:2}},{side:'R',atoms:{H:2,O:1}}]),
+
+  Q("__Na₂O₂ + __H₂O → __NaOH + __O₂",            [2,2,4,1],"hard",
+    [{side:'L',atoms:{Na:2,O:2}},{side:'L',atoms:{H:2,O:1}},{side:'R',atoms:{Na:1,O:1,H:1}},{side:'R',atoms:{O:2}}]),
+
+  Q("__Al + __NaOH + __H₂O → __NaAlO₂ + __H₂",    [2,2,2,2,3],"hard",
+    [{side:'L',atoms:{Al:1}},{side:'L',atoms:{Na:1,O:1,H:1}},{side:'L',atoms:{H:2,O:1}},{side:'R',atoms:{Na:1,Al:1,O:2}},{side:'R',atoms:{H:2}}]),
+
+  Q("__Cr₂O₃ + __Al → __Al₂O₃ + __Cr",             [1,2,1,2],"hard",
+    [{side:'L',atoms:{Cr:2,O:3}},{side:'L',atoms:{Al:1}},{side:'R',atoms:{Al:2,O:3}},{side:'R',atoms:{Cr:1}}]),
+
+  Q("__N₂H₄ + __O₂ → __N₂ + __H₂O",               [1,1,1,2],"hard",
+    [{side:'L',atoms:{N:2,H:4}},{side:'L',atoms:{O:2}},{side:'R',atoms:{N:2}},{side:'R',atoms:{H:2,O:1}}]),
+
+  Q("__SiO₂ + __NaOH → __Na₂SiO₃ + __H₂O",        [1,2,1,1],"hard",
+    [{side:'L',atoms:{Si:1,O:2}},{side:'L',atoms:{Na:1,O:1,H:1}},{side:'R',atoms:{Na:2,Si:1,O:3}},{side:'R',atoms:{H:2,O:1}}]),
+
+  Q("__PCl₅ + __H₂O → __H₃PO₄ + __HCl",           [1,4,1,5],"hard",
+    [{side:'L',atoms:{P:1,Cl:5}},{side:'L',atoms:{H:2,O:1}},{side:'R',atoms:{H:3,P:1,O:4}},{side:'R',atoms:{H:1,Cl:1}}]),
+
+  Q("__K₂Cr₂O₇ + __HCl → __KCl + __CrCl₃ + __Cl₂ + __H₂O",[1,14,2,2,3,7],"hard",
+    [{side:'L',atoms:{K:2,Cr:2,O:7}},{side:'L',atoms:{H:1,Cl:1}},{side:'R',atoms:{K:1,Cl:1}},{side:'R',atoms:{Cr:1,Cl:3}},{side:'R',atoms:{Cl:2}},{side:'R',atoms:{H:2,O:1}}]),
+
+  Q("__KMnO₄ + __HCl → __KCl + __MnCl₂ + __Cl₂ + __H₂O",[2,16,2,2,5,8],"hard",
+    [{side:'L',atoms:{K:1,Mn:1,O:4}},{side:'L',atoms:{H:1,Cl:1}},{side:'R',atoms:{K:1,Cl:1}},{side:'R',atoms:{Mn:1,Cl:2}},{side:'R',atoms:{Cl:2}},{side:'R',atoms:{H:2,O:1}}]),
+
+  Q("__Cu + __HNO₃ → __Cu(NO₃)₂ + __NO + __H₂O",  [3,8,3,2,4],"hard",
+    [{side:'L',atoms:{Cu:1}},{side:'L',atoms:{H:1,N:1,O:3}},{side:'R',atoms:{Cu:1,N:2,O:6}},{side:'R',atoms:{N:1,O:1}},{side:'R',atoms:{H:2,O:1}}]),
+
+  Q("__P + __O₂ → __P₄O₁₀",                        [4,5,1],"hard",
+    [{side:'L',atoms:{P:1}},{side:'L',atoms:{O:2}},{side:'R',atoms:{P:4,O:10}}]),
+
+  Q("__C₁₂H₂₂O₁₁ + __O₂ → __CO₂ + __H₂O",        [1,12,12,11],"hard",
+    [{side:'L',atoms:{C:12,H:22,O:11}},{side:'L',atoms:{O:2}},{side:'R',atoms:{C:1,O:2}},{side:'R',atoms:{H:2,O:1}}]),
+
+  Q("__FeS₂ + __O₂ → __FeO + __SO₂",               [2,5,2,4],"hard",
+    [{side:'L',atoms:{Fe:1,S:2}},{side:'L',atoms:{O:2}},{side:'R',atoms:{Fe:1,O:1}},{side:'R',atoms:{S:1,O:2}}]),
+
+  Q("__NH₃ + __CuO → __Cu + __N₂ + __H₂O",         [2,3,3,1,3],"hard",
+    [{side:'L',atoms:{N:1,H:3}},{side:'L',atoms:{Cu:1,O:1}},{side:'R',atoms:{Cu:1}},{side:'R',atoms:{N:2}},{side:'R',atoms:{H:2,O:1}}]),
+];
+
+// ══════════════════════════════════════════════════════
+// HINT ENGINE — exact atom counting, always element-specific
+// Never reveals the correct coefficient. Only names the
+// specific element(s) that are still out of balance with
+// the exact numbers the student currently has.
+// ══════════════════════════════════════════════════════
+function generateHint(q, given, attemptNum){
+  const issues = getImbalances(q, given);
+
+  // Shouldn't happen (already checked correct above), but guard
+  if(issues.length === 0){
+    return {msg:'✅ All atoms balance — that looks correct!', cls:'hint-correct'};
+  }
+
+  // Build the element-specific message lines
+  // Show up to 3 worst offenders so the hint isn't overwhelming
+  const shown = issues.slice(0, 3);
+
+  const lines = shown.map(({name, left, right})=>{
+    const diff = left - right;
+    if(diff > 0){
+      return `• ${name}: left side has ${left}, right side has ${right} — right side needs ${diff} more ${name} atom${diff>1?'s':''}`;
+    } else {
+      return `• ${name}: right side has ${right}, left side has ${left} — left side needs ${Math.abs(diff)} more ${name} atom${Math.abs(diff)>1?'s':''}`;
+    }
+  });
+
+  // Add a closing strategy tip that escalates with attempt number
+  let tip = '';
+  if(attemptNum === 1){
+    tip = '💡 Adjust the coefficient of a compound containing this element.';
+  } else if(attemptNum === 2){
+    tip = '💡 Changing one coefficient may affect multiple elements — re-check all affected atoms after each change.';
+  } else {
+    tip = '💡 Remember: if an element appears in more than one compound on the same side, add up all its contributions before comparing.';
+  }
+
+  const elNames = shown.map(i=>i.name).join(', ');
+  const intro = issues.length === 1
+    ? `⚗️ ${elNames} is not balanced yet:`
+    : `⚗️ ${issues.length} element${issues.length>1?'s are':' is'} still unbalanced (showing ${shown.length}):`;
+
+  return {
+    msg: `${intro}\n${lines.join('\n')}\n${tip}`,
+    cls: shown.length === 1 ? 'hint-nudge' : 'hint-guide'
+  };
+}
+
+// ══════════════════════════════════════════════════════
+// GAME STATE
+// ══════════════════════════════════════════════════════
+const MAX_ATTEMPTS = 4; // after 4 wrong attempts, move on (still no answer shown)
+
+let G = {
+  p1:{name:'P1',score:0,qIdx:0,questions:[],slotIdx:0,slots:[],attempts:0,done:false,locked:false},
+  p2:{name:'P2',score:0,qIdx:0,questions:[],slotIdx:0,slots:[],attempts:0,done:false,locked:false},
+  totalQ:5, diffMode:'easy'
+};
+let canvas, ctx, animFrame;
+
+function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=0|Math.random()*(i+1);[b[i],b[j]]=[b[j],b[i]];}return b;}
+
+document.querySelectorAll('.diff-btn').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.diff-btn').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active'); G.diffMode=b.dataset.diff;
+}));
+document.querySelectorAll('.qc-btn').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.qc-btn').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active'); G.totalQ=+b.dataset.q;
+}));
+
+function getPool(){
+  if(G.diffMode==='all'){
+    return[...shuffle(ALL_QUESTIONS.filter(q=>q.diff==='easy')),...shuffle(ALL_QUESTIONS.filter(q=>q.diff==='medium')),...shuffle(ALL_QUESTIONS.filter(q=>q.diff==='hard'))];
+  }
+  let pool=shuffle(ALL_QUESTIONS.filter(q=>q.diff===G.diffMode));
+  if(pool.length<G.totalQ*2) pool=[...pool,...shuffle(ALL_QUESTIONS.filter(q=>q.diff!==G.diffMode))];
+  return pool;
+}
+
+function startGame(){
+  const p1n=document.getElementById('p1name').value.trim()||'Player 1';
+  const p2n=document.getElementById('p2name').value.trim()||'Player 2';
+  const pool=getPool();
+  const full=pool.length>=G.totalQ*2?pool:[...pool,...shuffle(ALL_QUESTIONS)].slice(0,G.totalQ*2);
+  G.p1={name:p1n,score:0,qIdx:0,questions:full.slice(0,G.totalQ),slotIdx:0,slots:[],attempts:0,done:false,locked:false};
+  G.p2={name:p2n,score:0,qIdx:0,questions:full.slice(G.totalQ,G.totalQ*2),slotIdx:0,slots:[],attempts:0,done:false,locked:false};
+  document.getElementById('p1NameDisplay').textContent=p1n;
+  document.getElementById('p2NameDisplay').textContent=p2n;
+  document.getElementById('pbP1Name').textContent=p1n.slice(0,6);
+  document.getElementById('pbP2Name').textContent=p2n.slice(0,6);
+  document.getElementById('setupScreen').style.display='none';
+  document.getElementById('gameScreen').style.display='block';
+  buildKeyboard('p1'); buildKeyboard('p2');
+  canvas=document.getElementById('scoreboardCanvas'); ctx=canvas.getContext('2d');
+  loadQ('p1'); loadQ('p2'); drawScoreboard();
+}
+
+// ══ Load Question ══
+function loadQ(p){
+  const ps=G[p];
+  if(ps.qIdx>=ps.questions.length){ps.done=true;checkEnd();return;}
+  const q=ps.questions[ps.qIdx];
+  q.qNum=ps.qIdx+1; // tag for history label
+  ps.slots=q.correct.map(()=>'');
+  ps.wrongSlots=new Set();
+  ps.slotIdx=0; ps.attempts=0; ps.attemptLog=[]; ps.locked=false;
+  renderEq(p); renderSlots(p); renderAtomBar(p);
+  setHint(p,'','hint-empty');
+  unlockKB(p);
+  const dl=getDL(q.diff);
+  const db=document.getElementById(`${p}DiffBadge`);
+  db.textContent=dl.t; db.className='diff-badge '+dl.c;
+  document.getElementById(`${p}QNum`).textContent=`Q${ps.qIdx+1} of ${ps.questions.length}`;
+  updateAttemptUI(p);
+  updateRoundInfo();
+}
+
+function getDL(d){
+  if(d==='easy') return{t:'Easy',c:'diff-easy'};
+  if(d==='medium') return{t:'Med',c:'diff-medium'};
+  return{t:'Hard',c:'diff-hard'};
+}
+
+// ══ Render equation ══
+function renderEq(p){
+  const ps=G[p]; const q=ps.questions[ps.qIdx];
+  const c=document.getElementById(`${p}EqDisplay`); c.innerHTML='';
+  let ci=0;
+  q.parts.forEach(part=>{
+    if(part.type==='coeff'){
+      const box=document.createElement('span');
+      box.className='eq-coeff-box'+(ps.slots[ci]!==''?' filled':'')+(ci===ps.slotIdx?' active-slot':'')+(ps.wrongSlots&&ps.wrongSlots.has(ci)?' wrong-slot':'');
+      box.dataset.ci=ci;
+      box.textContent=ps.slots[ci]!==''?ps.slots[ci]:(ci===ps.slotIdx?'?':'_');
+      const i=ci;
+      box.addEventListener('touchstart',e=>{e.preventDefault();if(!ps.locked){ps.slotIdx=i;renderEq(p);renderSlots(p);}},{passive:false});
+      box.addEventListener('mousedown',e=>{e.preventDefault();if(!ps.locked){ps.slotIdx=i;renderEq(p);renderSlots(p);}});
+      c.appendChild(box); ci++;
+    } else {
+      const s=document.createElement('span');
+      if(part.val.includes('→')){s.className='eq-arrow';s.textContent=part.val;}
+      else if(part.val.trim()==='+'){s.className='eq-plus';s.textContent=' + ';}
+      else{s.className='eq-formula';s.textContent=part.val;}
+      c.appendChild(s);
+    }
+  });
+}
+
+// ══ Slot dots ══
+function renderSlots(p){
+  const ps=G[p]; const q=ps.questions[ps.qIdx];
+  const ind=document.getElementById(`${p}SlotIndicator`);
+  ind.innerHTML='<span style="font-size:0.62rem;color:#444;margin-right:4px;">Slots:</span>';
+  for(let i=0;i<q.correct.length;i++){
+    const dot=document.createElement('span');
+    dot.className='slot-dot';
+    if(i===ps.slotIdx) dot.classList.add('active-dot');
+    else if(ps.wrongSlots&&ps.wrongSlots.has(i)) dot.classList.add('wrong-dot');
+    else if(ps.slots[i]!=='') dot.classList.add('filled-dot');
+    else dot.classList.add('empty');
+    dot.textContent=ps.slots[i]!==''?ps.slots[i]:(i===ps.slotIdx?'▶':'_');
+    const ci=i;
+    dot.addEventListener('touchstart',e=>{e.preventDefault();if(!ps.locked){ps.slotIdx=ci;renderEq(p);renderSlots(p);}},{passive:false});
+    dot.addEventListener('mousedown',e=>{e.preventDefault();if(!ps.locked){ps.slotIdx=ci;renderEq(p);renderSlots(p);}});
+    ind.appendChild(dot);
+  }
+}
+
+// ══ Atom Balance Bar (Easy mode only) ══
+function renderAtomBar(p){
+  const bar=document.getElementById(`${p}AtomBar`);
+  const ps=G[p];
+  if(!ps.questions||ps.qIdx>=ps.questions.length){bar.classList.add('hidden');return;}
+  const q=ps.questions[ps.qIdx];
+  if(q.diff!=='easy'){bar.classList.add('hidden');return;}
+  bar.classList.remove('hidden');
+
+  // For each compound slot: use the entered coefficient, or 0 if empty
+  const coeffs=ps.slots.map(s=>s===''?0:parseInt(s)||0);
+
+  // Compute true atom totals per element per side
+  // Only count compounds whose slot has been filled (coeff > 0)
+  const totals={}; // {El: {L:n, R:n, LFilled:bool, RFilled:bool}}
+  // First pass: collect every element that appears in the equation
+  q.compounds.forEach(cmp=>{
+    for(const el of Object.keys(cmp.atoms)){
+      if(!totals[el]) totals[el]={L:0,R:0,LDone:false,RDone:false};
+    }
+  });
+  // Second pass: accumulate counts only for filled slots
+  q.compounds.forEach((cmp,i)=>{
+    const coeff=coeffs[i];
+    const side=cmp.side; // 'L' or 'R'
+    // Mark this side as having at least one filled slot for each element
+    for(const el of Object.keys(cmp.atoms)){
+      if(coeff>0) totals[el][side+'Done']=true;
+    }
+    if(coeff===0) return; // empty — skip counting
+    for(const [el,cnt] of Object.entries(cmp.atoms)){
+      totals[el][side]+=coeff*cnt;
+    }
+  });
+
+  bar.innerHTML='<div class="atom-bar-label">⚛️ Atom count: Left ↔ Right</div>';
+
+  for(const [el,{L,R,LDone,RDone}] of Object.entries(totals)){
+    const pill=document.createElement('span');
+    // Show actual numbers once a side has at least one filled compound
+    const lStr=LDone?L:'–';
+    const rStr=RDone?R:'–';
+    // Balanced/unbalanced only when BOTH sides have all their slots filled for this element
+    // Determine if all compounds containing this element have been filled
+    const allFilledForEl=q.compounds.every((cmp,i)=>
+      !Object.keys(cmp.atoms).includes(el) || coeffs[i]>0
+    );
+    const balanced   = allFilledForEl && L===R;
+    const unbalanced = allFilledForEl && L!==R;
+    const partial    = (LDone||RDone) && !allFilledForEl;
+
+    pill.className='atom-pill '+(balanced?'balanced':unbalanced?'unbalanced':'empty');
+    const icon=balanced?' ✅':unbalanced?' ❌':'';
+    pill.innerHTML=
+      `<span class="atom-el">${el}</span>`+
+      `<span class="atom-counts"> ${lStr}<span class="atom-sep"> ↔ </span>${rStr}</span>`+
+      `${icon}`;
+    bar.appendChild(pill);
+  }
+}
+
+function updateAttemptUI(p){
+  const ps=G[p];
+  const el=document.getElementById(`${p}AttemptCounter`);
+  if(ps.attempts===0){el.innerHTML='';return;}
+  const remaining=MAX_ATTEMPTS-ps.attempts;
+  let html=`<span style="font-size:0.62rem;color:#555;">Tries left: </span>`;
+  for(let i=0;i<MAX_ATTEMPTS;i++){
+    const cls=i<ps.attempts?'pip used':'pip remaining';
+    html+=`<span class="${cls}"></span>`;
+  }
+  el.innerHTML=html;
+}
+
+// ══ Keyboard ══
+function buildKeyboard(p){
+  const kb=document.getElementById(`${p}Keyboard`); kb.innerHTML='';
+  function mk(label,cls,fn){
+    const b=document.createElement('button');
+    b.className=`kb-key ${cls}`;b.textContent=label;
+    b.addEventListener('touchstart',e=>{e.preventDefault();if(!G[p].locked)fn();},{passive:false});
+    b.addEventListener('mousedown',e=>{e.preventDefault();if(!G[p].locked)fn();});
+    return b;
+  }
+  // Nav row
+  const navSec=document.createElement('div');navSec.className='kb-section';
+  const navLbl=document.createElement('div');navLbl.className='kb-section-label';navLbl.textContent='◀ ▶ Navigate slots';
+  const navRow=document.createElement('div');navRow.className='kb-row';
+  navRow.appendChild(mk('◀ Prev','kb-nav',()=>moveSlot(p,-1)));
+  navRow.appendChild(mk('Next ▶','kb-nav',()=>moveSlot(p,1)));
+  navRow.appendChild(mk('Clear Slot','kb-clr',()=>clearSlot(p)));
+  navRow.appendChild(mk('CLR ALL','kb-del',()=>clearAll(p)));
+  navSec.appendChild(navLbl);navSec.appendChild(navRow);kb.appendChild(navSec);
+  // Numbers
+  const numSec=document.createElement('div');numSec.className='kb-section';
+  const numLbl=document.createElement('div');numLbl.className='kb-section-label';numLbl.textContent='🔢 Coefficients';
+  const r1=document.createElement('div');r1.className='kb-row';
+  const r2=document.createElement('div');r2.className='kb-row';
+  const r3=document.createElement('div');r3.className='kb-row';
+  [1,2,3,4,5,6,7,8].forEach(n=>r1.appendChild(mk(String(n),'kb-num',()=>enterCoeff(p,String(n)))));
+  [9,10,11,12,13,14,15,16].forEach(n=>r2.appendChild(mk(String(n),'kb-num',()=>enterCoeff(p,String(n)))));
+  [20,22,25,31].forEach(n=>r3.appendChild(mk(String(n),'kb-num',()=>enterCoeff(p,String(n)))));
+  numSec.appendChild(numLbl);numSec.appendChild(r1);numSec.appendChild(r2);numSec.appendChild(r3);
+  kb.appendChild(numSec);
+  // Submit
+  const actRow=document.createElement('div');actRow.className='kb-row';
+  actRow.appendChild(mk('✓ Submit Answer',`kb-submit`,()=>submitAnswer(p)));
+  kb.appendChild(actRow);
+}
+
+function moveSlot(p,dir){const ps=G[p];const q=ps.questions[ps.qIdx];ps.slotIdx=Math.max(0,Math.min(q.correct.length-1,ps.slotIdx+dir));renderEq(p);renderSlots(p);}
+function enterCoeff(p,val){
+  const ps=G[p];
+  ps.slots[ps.slotIdx]=val;
+  // Clear red flag for this slot the moment they change it
+  if(ps.wrongSlots) ps.wrongSlots.delete(ps.slotIdx);
+  const q=ps.questions[ps.qIdx];
+  let next=ps.slotIdx+1;
+  for(let i=ps.slotIdx+1;i<q.correct.length;i++){if(ps.slots[i]===''){next=i;break;}}
+  if(next<q.correct.length)ps.slotIdx=next;
+  renderEq(p);renderSlots(p);renderAtomBar(p);
+}
+function clearSlot(p){const ps=G[p];ps.slots[ps.slotIdx]='';renderEq(p);renderSlots(p);renderAtomBar(p);}
+function clearAll(p){const ps=G[p];ps.slots=ps.slots.map(()=>'');ps.wrongSlots=new Set();ps.slotIdx=0;renderEq(p);renderSlots(p);renderAtomBar(p);}
+function lockKB(p){G[p].locked=true;document.getElementById(`${p}Keyboard`).querySelectorAll('.kb-key').forEach(k=>k.classList.add('locked'));}
+function unlockKB(p){G[p].locked=false;document.getElementById(`${p}Keyboard`).querySelectorAll('.kb-key').forEach(k=>k.classList.remove('locked'));}
+function setHint(p,msg,cls){const el=document.getElementById(`${p}Hint`);el.textContent=msg;el.className='hint-box '+cls;}
+
+// ══ SUBMIT ══
+function submitAnswer(p){
+  const ps=G[p];
+  if(ps.locked||ps.done) return;
+  const q=ps.questions[ps.qIdx];
+  if(ps.slots.some(s=>s==='')){
+    setHint(p,'⚠️ Please fill in all coefficient slots before submitting.','hint-warn');
+    return;
+  }
+  const given=ps.slots.map(s=>parseInt(s)||1);
+  const isCorrect=given.every((v,i)=>v===q.correct[i]);
+
+  if(isCorrect){
+    // ✅ CORRECT
+    ps.score++;
+    document.getElementById(`${p}Score`).textContent=ps.score;
+    setHint(p,'✅ Correct! The equation is balanced — atoms are equal on both sides!','hint-correct');
+    flashPanel(p,'green');
+    showCheer(p); spawnParticles(p); spawnConfetti(p);
+    updatePowerBars();
+    addHistory(p,'correct',q,given,ps.attemptLog);
+    lockKB(p);
+    setTimeout(()=>{ps.qIdx++;loadQ(p);},2000);
+  } else {
+    // ❌ WRONG — log this attempt, generate hint, do NOT reveal answer
+    ps.attempts++;
+    ps.attemptLog.push([...given]); // record this attempt's coefficients
+    updateAttemptUI(p);
+    flashPanel(p,'orange');
+
+    // Highlight wrong slots visually
+    highlightWrongSlots(p, given, q.correct);
+
+    if(ps.attempts >= MAX_ATTEMPTS){
+      // Max attempts reached — skip question, still no answer shown
+      setHint(p,`🔄 Good effort! This one was tricky — it's been recorded for review. Moving on…`,'hint-skip');
+      addHistory(p,'skip',q,given,ps.attemptLog);
+      lockKB(p);
+      setTimeout(()=>{ps.qIdx++;loadQ(p);},2500);
+    } else {
+      const hint=generateHint(q, given, ps.attempts);
+      setHint(p, hint.msg, hint.cls);
+      // Unlock so they can try again
+    }
+  }
+}
+
+function highlightWrongSlots(p, given, correct){
+  const ps=G[p];
+  if(!ps.wrongSlots) ps.wrongSlots=new Set();
+  // Mark all wrong slots persistently — cleared only when student changes that slot value
+  given.forEach((val,i)=>{
+    if(val!==correct[i]) ps.wrongSlots.add(i);
+    else ps.wrongSlots.delete(i);
+  });
+  renderEq(p);
+  renderSlots(p);
+}
+
+// ══ Power bars ══
+function updatePowerBars(){
+  const max=Math.max(G.totalQ,1);
+  const p1p=Math.min(100,(G.p1.score/max)*100);
+  const p2p=Math.min(100,(G.p2.score/max)*100);
+  const b1=document.getElementById('p1PBar'),b2=document.getElementById('p2PBar');
+  b1.style.width=p1p+'%';b2.style.width=p2p+'%';
+  document.getElementById('pbP1Score').textContent=G.p1.score;
+  document.getElementById('pbP2Score').textContent=G.p2.score;
+  b1.classList.remove('flash-bar');void b1.offsetWidth;b1.classList.add('flash-bar');
+  const banner=document.getElementById('winningBanner');
+  if(G.p1.score>G.p2.score){banner.textContent=`🔥 ${G.p1.name} is pulling ahead!`;banner.className='winning-banner p1-winning';}
+  else if(G.p2.score>G.p1.score){banner.textContent=`🔥 ${G.p2.name} is pulling ahead!`;banner.className='winning-banner p2-winning';}
+  else{banner.textContent='⚡ Perfectly matched!';banner.className='winning-banner tied';}
+}
+
+function updateRoundInfo(){
+  const r=Math.min(G.p1.qIdx,G.p2.qIdx)+1;
+  document.getElementById('roundCount').textContent=`Round ${r}`;
+  document.getElementById('roundInfo').textContent=`P1 on Q${G.p1.qIdx+1} · P2 on Q${G.p2.qIdx+1}`;
+}
+
+// ══ History ══
+// Helper: build an equation string from parts + a coefficient array
+function buildEqStr(q, coeffs){
+  let s='', ci=0;
+  q.parts.forEach(pt=>{
+    if(pt.type==='coeff'){
+      const v=coeffs[ci]; s+=(v===1?'':v); ci++;
+    } else s+=pt.val;
+  });
+  return s;
+}
+
+function addHistory(p, outcome, q, finalCoeffs, attemptLog){
+  const log=document.getElementById(`${p}History`);
+  const item=document.createElement('div');
+
+  const outcomeClass = outcome==='correct'?'history-correct':outcome==='skip'?'history-skip':'history-wrong';
+  const outcomeIcon  = outcome==='correct'?'✅':outcome==='skip'?'⏭️':'❌';
+  const totalTries   = attemptLog.length + (outcome==='correct'?1:0);
+  const triesTxt     = totalTries===1?'1 try':`${totalTries} tries`;
+
+  item.className='history-item '+outcomeClass;
+
+  // Question label
+  let html=`<div class="history-q-label">Q${q.qNum||'?'} · ${triesTxt} · ${outcomeIcon}</div>`;
+
+  // All wrong attempts
+  attemptLog.forEach((coeffs, idx)=>{
+    const eqStr = buildEqStr(q, coeffs);
+    html+=`<div class="history-attempt h-wrong">❌ Try ${idx+1}: ${eqStr.length>42?eqStr.slice(0,42)+'…':eqStr}</div>`;
+  });
+
+  // Final result line
+  if(outcome==='correct'){
+    const eqStr = buildEqStr(q, finalCoeffs);
+    html+=`<div class="history-attempt h-correct">✅ Correct: ${eqStr.length>42?eqStr.slice(0,42)+'…':eqStr}</div>`;
+  } else if(outcome==='skip'){
+    html+=`<div class="history-attempt" style="color:#64748b;">⏭️ Moved on after ${MAX_ATTEMPTS} tries</div>`;
+  }
+
+  item.innerHTML=html;
+  log.insertBefore(item,log.firstChild);
+}
+
+// ══ FX ══
+function flashPanel(p,color){
+  const id=`${p}Flash${color==='green'?'Green':'Orange'}`;
+  const el=document.getElementById(id);if(!el)return;
+  el.classList.add('flash-active');setTimeout(()=>el.classList.remove('flash-active'),350);
+}
+const CHEERS=['🔥 Brilliant!','⚡ Nailed it!','💥 Correct!','🌟 Amazing!','🎯 Spot on!','👏 Well done!','🏅 Superb!','✨ Perfect!'];
+function showCheer(p){
+  const rect=document.getElementById(p+'Panel').getBoundingClientRect();
+  const d=document.createElement('div');d.className='cheer-bubble';
+  d.style.color=p==='p1'?'#FF6B9D':'#4ECDC4';
+  d.textContent=CHEERS[0|Math.random()*CHEERS.length];
+  d.style.left=(rect.left+rect.width/2-60)+'px';d.style.top=(rect.top+rect.height*0.36)+'px';
+  document.body.appendChild(d);setTimeout(()=>d.remove(),1700);
+}
+const PE=['🌟','⭐','✨','💥','🎉','🎊','🔥','💫','🏅','👑'];
+function spawnParticles(p){
+  const rect=document.getElementById(p+'Panel').getBoundingClientRect();
+  const cx=rect.left+rect.width/2,cy=rect.top+rect.height/2;
+  for(let i=0;i<10;i++){
+    const d=document.createElement('div');d.className='particle';
+    d.textContent=PE[0|Math.random()*PE.length];
+    const a=Math.random()*Math.PI*2,dist=60+Math.random()*80;
+    d.style.setProperty('--dx',Math.cos(a)*dist+'px');d.style.setProperty('--dy',Math.sin(a)*dist+'px');
+    d.style.left=cx+'px';d.style.top=cy+'px';
+    document.body.appendChild(d);setTimeout(()=>d.remove(),1300);
+  }
+}
+function spawnConfetti(p){
+  const rect=document.getElementById(p+'Panel').getBoundingClientRect();
+  const cols=p==='p1'?['#FF6B9D','#FFB3D0','#FF4081']:['#4ECDC4','#A0EDE8','#26B5AC'];
+  for(let i=0;i<18;i++){
+    const d=document.createElement('div');d.className='confetti-piece';
+    d.style.background=cols[0|Math.random()*cols.length];
+    d.style.left=(rect.left+Math.random()*rect.width)+'px';
+    d.style.setProperty('--sy',(rect.top-10)+'px');
+    d.style.setProperty('--dur',(0.8+Math.random()*0.8)+'s');
+    d.style.animationDelay=(Math.random()*0.4)+'s';
+    document.body.appendChild(d);setTimeout(()=>d.remove(),1800);
+  }
+}
+
+// ══ Canvas scoreboard ══
+function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.lineTo(x+w-r,y);c.quadraticCurveTo(x+w,y,x+w,y+r);c.lineTo(x+w,y+h-r);c.quadraticCurveTo(x+w,y+h,x+w-r,y+h);c.lineTo(x+r,y+h);c.quadraticCurveTo(x,y+h,x,y+h-r);c.lineTo(x,y+r);c.quadraticCurveTo(x,y,x+r,y);c.closePath();}
+function drawScoreboard(){
+  if(!ctx){animFrame=requestAnimationFrame(drawScoreboard);return;}
+  ctx.clearRect(0,0,260,200);
+  const p1s=G.p1.score,p2s=G.p2.score,tot=G.totalQ;
+  ctx.fillStyle='#12122a';rr(ctx,0,0,260,200,16);ctx.fill();
+  ctx.fillStyle='#ffffff18';ctx.font='bold 10px Nunito,sans-serif';ctx.textAlign='center';ctx.fillText('⚡ POWER SCOREBOARD',130,20);
+  const cx=130,cy=100,r=44;
+  const gr=ctx.createRadialGradient(cx,cy,8,cx,cy,r);
+  gr.addColorStop(0,'#1e1e3a');gr.addColorStop(1,'#2a2a4a');
+  ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fillStyle=gr;ctx.fill();
+  ctx.strokeStyle=p1s>p2s?'#FF6B9D':p2s>p1s?'#4ECDC4':'#ffffff18';ctx.lineWidth=2.5;ctx.stroke();
+  ctx.font='bold 34px "Fredoka One",cursive';ctx.textAlign='center';
+  ctx.fillStyle='#FF6B9D';ctx.fillText(p1s,cx-22,cy+12);
+  ctx.fillStyle='#ffffff28';ctx.font='bold 18px "Fredoka One",cursive';ctx.fillText('–',cx,cy+8);
+  ctx.fillStyle='#4ECDC4';ctx.font='bold 34px "Fredoka One",cursive';ctx.fillText(p2s,cx+22,cy+12);
+  ctx.font='700 9px Nunito,sans-serif';
+  ctx.fillStyle='#FF6B9D';ctx.textAlign='left';ctx.fillText((G.p1.name||'P1').slice(0,9),8,cy);
+  ctx.fillStyle='#4ECDC4';ctx.textAlign='right';ctx.fillText((G.p2.name||'P2').slice(0,9),252,cy);
+  const bw=80,bh=10,by=158;
+  ctx.fillStyle='#ffffff08';rr(ctx,10,by,bw,bh,5);ctx.fill();
+  const p1p=Math.min(1,p1s/Math.max(tot,1));
+  if(p1p>0){const g1=ctx.createLinearGradient(10,by,10+bw,by);g1.addColorStop(0,'#FF6B9D');g1.addColorStop(1,'#ff4081');ctx.fillStyle=g1;rr(ctx,10,by,bw*p1p,bh,5);ctx.fill();}
+  ctx.fillStyle='#ffffff08';rr(ctx,260-10-bw,by,bw,bh,5);ctx.fill();
+  const p2p=Math.min(1,p2s/Math.max(tot,1));
+  if(p2p>0){const g2=ctx.createLinearGradient(260-10-bw,by,250,by);g2.addColorStop(0,'#4ECDC4');g2.addColorStop(1,'#26b5ac');ctx.fillStyle=g2;rr(ctx,260-10-bw,by,bw*p2p,bh,5);ctx.fill();}
+  ctx.font='700 10px Nunito,sans-serif';ctx.textAlign='center';
+  if(p1s>p2s){ctx.fillStyle='#FF6B9D';ctx.fillText('WINNING 🔥',130,186);}
+  else if(p2s>p1s){ctx.fillStyle='#4ECDC4';ctx.fillText('WINNING 🔥',130,186);}
+  else{ctx.fillStyle='#ffffff28';ctx.fillText('DRAW',130,186);}
+  animFrame=requestAnimationFrame(drawScoreboard);
+}
+
+// ══ End ══
+function checkEnd(){
+  if(G.p1.done&&G.p2.done){
+    cancelAnimationFrame(animFrame);
+    // Show teacher review banner in centre — do NOT auto-advance
+    document.getElementById('gameOverBanner').style.display='flex';
+    document.getElementById('winningBanner').style.display='none';
+  }
+}
+function showEnd(){
+  const p1s=G.p1.score,p2s=G.p2.score;
+  document.getElementById('endWinner').textContent=p1s===p2s?'🤝 It\'s a Draw!':`🏆 ${p1s>p2s?G.p1.name:G.p2.name} Wins!`;
+  document.getElementById('endP1Name').textContent=G.p1.name;
+  document.getElementById('endP2Name').textContent=G.p2.name;
+  document.getElementById('endP1Score').textContent=p1s;
+  document.getElementById('endP2Score').textContent=p2s;
+  document.getElementById('endScreen').style.display='flex';
+  for(let i=0;i<60;i++){
+    const d=document.createElement('div');d.className='confetti-piece';
+    const cols=['#FF6B9D','#4ECDC4','#FFE66D','#A8EDEA','#FED6E3','#fff'];
+    d.style.background=cols[0|Math.random()*cols.length];
+    d.style.left=Math.random()*100+'vw';
+    d.style.setProperty('--sy','-20px');
+    d.style.setProperty('--dur',(1+Math.random()*1.5)+'s');
+    d.style.animationDelay=(Math.random()*1.5)+'s';
+    document.body.appendChild(d);setTimeout(()=>d.remove(),3500);
+  }
+}
+function playAgain(){
+  document.getElementById('endScreen').style.display='none';
+  document.getElementById('gameScreen').style.display='none';
+  document.getElementById('setupScreen').style.display='flex';
+  cancelAnimationFrame(animFrame);
+}
+</script>
+</body>
+</html>

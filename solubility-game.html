@@ -1,0 +1,1460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Solubility Showdown – Evergreen Secondary School</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --p1: #FF6B9D;
+    --p1-dark: #e0457a;
+    --p1-light: #ffe0ee;
+    --p2: #4ECDC4;
+    --p2-dark: #2ba89f;
+    --p2-light: #d0f5f3;
+    --centre: #2a2a4a;
+    --bg: #1a1a2e;
+    --card: #16213e;
+    --soluble: #2ecc71;
+    --soluble-dark: #27ae60;
+    --insoluble: #e74c3c;
+    --insoluble-dark: #c0392b;
+    --easy: #2ecc71;
+    --medium: #f39c12;
+    --hard: #e74c3c;
+    --text-light: #f0f0f0;
+    --text-dim: #aaa;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    color: var(--text-light);
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ─── SETUP SCREEN ─── */
+  #setup-screen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background: radial-gradient(ellipse at center, #1e1e3f 0%, #0d0d1a 100%);
+  }
+
+  .setup-card {
+    background: #16213e;
+    border-radius: 24px;
+    padding: 48px 56px;
+    width: 620px;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .setup-card h1 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 2.2rem;
+    text-align: center;
+    background: linear-gradient(135deg, var(--p1), var(--p2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 6px;
+  }
+
+  .setup-school {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    margin-bottom: 32px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .setup-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .setup-field {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .setup-field label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  .setup-field input {
+    background: #0d0d1a;
+    border: 2px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 12px 16px;
+    color: var(--text-light);
+    font-family: 'Nunito', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .setup-field input:focus { border-color: rgba(255,255,255,0.3); }
+
+  .p1-field input:focus { border-color: var(--p1); }
+  .p2-field input:focus { border-color: var(--p2); }
+
+  .setup-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .option-group label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+  }
+
+  .btn-group {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .opt-btn {
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 2px solid rgba(255,255,255,0.15);
+    background: transparent;
+    color: var(--text-light);
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .opt-btn.active {
+    background: rgba(255,255,255,0.15);
+    border-color: rgba(255,255,255,0.5);
+  }
+
+  .diff-btn.easy.active { background: rgba(46,204,113,0.2); border-color: var(--easy); color: var(--easy); }
+  .diff-btn.medium.active { background: rgba(243,156,18,0.2); border-color: var(--medium); color: var(--medium); }
+  .diff-btn.hard.active { background: rgba(231,76,60,0.2); border-color: var(--hard); color: var(--hard); }
+  .diff-btn.mixed.active { background: rgba(255,255,255,0.15); border-color: #aaa; color: #fff; }
+
+  .start-btn {
+    width: 100%;
+    padding: 18px;
+    background: linear-gradient(135deg, var(--p1), var(--p2));
+    border: none;
+    border-radius: 14px;
+    color: white;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.5rem;
+    cursor: pointer;
+    box-shadow: 0 6px 0 rgba(0,0,0,0.3);
+    transition: transform 0.1s, box-shadow 0.1s;
+    letter-spacing: 1px;
+  }
+
+  .start-btn:active { transform: translateY(3px); box-shadow: 0 3px 0 rgba(0,0,0,0.3); }
+
+  /* ─── GAME SCREEN ─── */
+  #game-screen {
+    display: none;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+  }
+
+  .game-layout {
+    display: grid;
+    grid-template-columns: 1fr 280px 1fr;
+    height: 100vh;
+    gap: 0;
+  }
+
+  /* ─── PLAYER PANELS ─── */
+  .player-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .p1-panel { background: linear-gradient(180deg, #2a1020 0%, #1a0a14 100%); border-right: 2px solid rgba(255,107,157,0.2); }
+  .p2-panel { background: linear-gradient(180deg, #0a2020 0%, #051414 100%); border-left: 2px solid rgba(78,205,196,0.2); }
+
+  .player-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-radius: 12px;
+    flex-shrink: 0;
+  }
+
+  .p1-panel .player-header { background: rgba(255,107,157,0.15); border: 1px solid rgba(255,107,157,0.3); }
+  .p2-panel .player-header { background: rgba(78,205,196,0.15); border: 1px solid rgba(78,205,196,0.3); }
+
+  .player-name {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.3rem;
+  }
+
+  .p1-panel .player-name { color: var(--p1); }
+  .p2-panel .player-name { color: var(--p2); }
+
+  .score-badge {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.8rem;
+    min-width: 48px;
+    text-align: center;
+  }
+
+  .p1-panel .score-badge { color: var(--p1); }
+  .p2-panel .score-badge { color: var(--p2); }
+
+  .diff-badge {
+    font-size: 0.65rem;
+    font-weight: 800;
+    padding: 3px 8px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .diff-badge.easy { background: rgba(46,204,113,0.2); color: var(--easy); border: 1px solid var(--easy); }
+  .diff-badge.medium { background: rgba(243,156,18,0.2); color: var(--medium); border: 1px solid var(--medium); }
+  .diff-badge.hard { background: rgba(231,76,60,0.2); color: var(--hard); border: 1px solid var(--hard); }
+
+  .question-card {
+    background: rgba(255,255,255,0.05);
+    border-radius: 14px;
+    padding: 18px 16px;
+    text-align: center;
+    flex-shrink: 0;
+    min-height: 110px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .question-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  .compound-name {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.5rem;
+    line-height: 1.2;
+  }
+
+  .compound-formula {
+    font-size: 0.95rem;
+    color: var(--text-dim);
+    font-weight: 600;
+  }
+
+  .q-counter {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    font-weight: 600;
+  }
+
+  /* ─── TIMER BAR ─── */
+  .timer-bar-wrap {
+    height: 8px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .timer-bar {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 1s linear, background 0.3s;
+  }
+
+  .p1-panel .timer-bar { background: var(--p1); }
+  .p2-panel .timer-bar { background: var(--p2); }
+
+  /* ─── ANSWER BUTTONS ─── */
+  .answer-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  .answer-btn {
+    padding: 20px 10px;
+    border-radius: 14px;
+    border: none;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s, opacity 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .answer-btn:active { transform: translateY(3px); box-shadow: none !important; }
+
+  .btn-soluble {
+    background: var(--soluble);
+    color: white;
+    box-shadow: 0 5px 0 var(--soluble-dark);
+  }
+
+  .btn-insoluble {
+    background: var(--insoluble);
+    color: white;
+    box-shadow: 0 5px 0 var(--insoluble-dark);
+  }
+
+  .answer-btn .btn-icon { font-size: 1.4rem; }
+  .answer-btn .btn-label { font-size: 1rem; }
+
+  .answer-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  /* ─── FEEDBACK ─── */
+  .feedback-area {
+    min-height: 48px;
+    border-radius: 10px;
+    padding: 10px 14px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.3s;
+  }
+
+  .feedback-correct { background: rgba(46,204,113,0.2); color: var(--easy); border: 1px solid var(--easy); }
+  .feedback-wrong { background: rgba(231,76,60,0.2); color: var(--insoluble); border: 1px solid var(--insoluble); }
+  .feedback-timeout { background: rgba(243,156,18,0.2); color: var(--medium); border: 1px solid var(--medium); }
+  .feedback-empty { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: var(--text-dim); }
+
+  /* ─── HISTORY LOG ─── */
+  .history-log {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-right: 4px;
+    min-height: 0;
+  }
+
+  .history-log::-webkit-scrollbar { width: 4px; }
+  .history-log::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+
+  .history-label {
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    flex-shrink: 0;
+  }
+
+  .log-entry {
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 0.75rem;
+    border-left: 3px solid transparent;
+    background: rgba(255,255,255,0.04);
+    flex-shrink: 0;
+  }
+
+  .log-entry.correct { border-left-color: var(--soluble); }
+  .log-entry.wrong { border-left-color: var(--insoluble); }
+  .log-entry.timeout { border-left-color: var(--medium); }
+
+  .log-compound { font-weight: 800; color: var(--text-light); margin-bottom: 2px; }
+  .log-attempts { color: var(--text-dim); font-size: 0.7rem; }
+  .log-outcome { font-weight: 700; font-size: 0.75rem; }
+
+  .log-entry.correct .log-outcome { color: var(--easy); }
+  .log-entry.wrong .log-outcome { color: var(--insoluble); }
+  .log-entry.timeout .log-outcome { color: var(--medium); }
+
+  /* ─── CENTRE COLUMN ─── */
+  .centre-col {
+    background: var(--centre);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 10px;
+    gap: 10px;
+    border-left: 1px solid rgba(255,255,255,0.06);
+    border-right: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .centre-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 0.9rem;
+    text-align: center;
+    color: rgba(255,255,255,0.5);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* ─── ROCKET SCOREBOARD ─── */
+  .rocket-stage {
+    flex: 1;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    position: relative;
+    min-height: 0;
+  }
+
+  .launch-pad {
+    width: 100%;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-around;
+    height: 100%;
+    position: relative;
+    padding-bottom: 10px;
+  }
+
+  .rocket-lane {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    height: 100%;
+    position: relative;
+    width: 80px;
+  }
+
+  .rocket-track {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 3px;
+    border-left: 2px dashed rgba(255,255,255,0.15);
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .stars-top {
+    position: absolute;
+    top: 0;
+    font-size: 1.2rem;
+    opacity: 0;
+    transition: opacity 0.5s;
+  }
+
+  .rocket-emoji {
+    font-size: 2.8rem;
+    position: relative;
+    transition: bottom 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+    bottom: 0;
+    filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));
+    line-height: 1;
+  }
+
+  .p1-rocket { filter: drop-shadow(0 0 8px rgba(255,107,157,0.8)); }
+  .p2-rocket { filter: drop-shadow(0 0 8px rgba(78,205,196,0.8)); }
+
+  .rocket-flame {
+    font-size: 1.4rem;
+    margin-top: -6px;
+    animation: flicker 0.3s infinite alternate;
+  }
+
+  @keyframes flicker {
+    from { transform: scaleY(1) scaleX(0.9); }
+    to { transform: scaleY(1.3) scaleX(1.1); }
+  }
+
+  .fuel-bar-wrap {
+    width: 24px;
+    height: 80px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    margin-bottom: 8px;
+    border: 1px solid rgba(255,255,255,0.12);
+  }
+
+  .fuel-bar {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    border-radius: 12px;
+    transition: height 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .p1-fuel { background: linear-gradient(180deg, var(--p1-light), var(--p1)); }
+  .p2-fuel { background: linear-gradient(180deg, var(--p2-light), var(--p2)); }
+
+  .rocket-label {
+    font-family: 'Fredoka One', cursive;
+    font-size: 0.75rem;
+    margin-top: 4px;
+    text-align: center;
+    max-width: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .p1-rocket-label { color: var(--p1); }
+  .p2-rocket-label { color: var(--p2); }
+
+  .vs-badge {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1rem;
+    color: rgba(255,255,255,0.3);
+    align-self: center;
+    margin-bottom: 50px;
+  }
+
+  /* ─── SCORE DISPLAY ─── */
+  .centre-scores {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    width: 100%;
+    gap: 4px;
+  }
+
+  .centre-score {
+    font-family: 'Fredoka One', cursive;
+    font-size: 2rem;
+    text-align: center;
+  }
+
+  .p1-cscore { color: var(--p1); }
+  .p2-cscore { color: var(--p2); }
+  .score-divider { color: rgba(255,255,255,0.2); font-family: 'Fredoka One', cursive; font-size: 1.2rem; }
+
+  /* ─── ADVANTAGE BANNER ─── */
+  .advantage-banner {
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    text-align: center;
+    padding: 5px 10px;
+    border-radius: 20px;
+    min-height: 24px;
+    width: 100%;
+    transition: all 0.3s;
+  }
+
+  .advantage-p1 { background: rgba(255,107,157,0.2); color: var(--p1); }
+  .advantage-p2 { background: rgba(78,205,196,0.2); color: var(--p2); }
+  .advantage-tie { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.4); }
+
+  /* ─── END GAME BUTTON ─── */
+  .end-btn {
+    width: 100%;
+    padding: 10px;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    color: var(--text-dim);
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    flex-shrink: 0;
+  }
+
+  .end-btn:hover { background: rgba(255,255,255,0.12); color: var(--text-light); }
+
+  /* ─── END SCREEN ─── */
+  #end-screen {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(10,10,20,0.95);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .end-card {
+    background: #16213e;
+    border-radius: 28px;
+    padding: 52px 64px;
+    text-align: center;
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 32px 80px rgba(0,0,0,0.7);
+    max-width: 560px;
+    width: 90%;
+  }
+
+  .trophy { font-size: 5rem; margin-bottom: 8px; animation: bounce 1s ease infinite alternate; }
+  @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-12px); } }
+
+  .winner-label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+  }
+
+  .winner-name {
+    font-family: 'Fredoka One', cursive;
+    font-size: 2.8rem;
+    margin-bottom: 4px;
+  }
+
+  .final-scores {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin: 24px 0;
+  }
+
+  .final-score-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .final-score-name {
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .final-score-num {
+    font-family: 'Fredoka One', cursive;
+    font-size: 3rem;
+  }
+
+  .play-again-btn {
+    margin-top: 8px;
+    padding: 16px 48px;
+    background: linear-gradient(135deg, var(--p1), var(--p2));
+    border: none;
+    border-radius: 14px;
+    color: white;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.3rem;
+    cursor: pointer;
+    box-shadow: 0 6px 0 rgba(0,0,0,0.3);
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+
+  .play-again-btn:active { transform: translateY(3px); box-shadow: 0 3px 0 rgba(0,0,0,0.3); }
+
+  /* ─── CONFETTI ─── */
+  .confetti-piece {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    top: -20px;
+    border-radius: 2px;
+    animation: confetti-fall linear forwards;
+    z-index: 99;
+  }
+
+  @keyframes confetti-fall {
+    0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+  }
+
+  /* ─── LAUNCH ANIMATION ─── */
+  .blast-off {
+    animation: blastOff 2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+
+  @keyframes blastOff {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-300px); opacity: 0; }
+  }
+
+  /* ─── PULSE ON CORRECT ─── */
+  @keyframes pulse-correct {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+    100% { transform: scale(1); }
+  }
+
+  .pulse-correct { animation: pulse-correct 0.3s ease; }
+
+  /* ─── WAITING STATE ─── */
+  .waiting-state {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  .finished-state .question-card {
+    background: rgba(46,204,113,0.08);
+    border-color: rgba(46,204,113,0.3);
+  }
+
+  .finished-label {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.1rem;
+    color: var(--easy);
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     SETUP SCREEN
+══════════════════════════════════════════ -->
+<div id="setup-screen">
+  <div class="setup-card">
+    <h1>🚀 Solubility Showdown</h1>
+    <div class="setup-school">Evergreen Secondary School · Chemistry</div>
+
+    <div class="setup-row">
+      <div class="setup-field p1-field">
+        <label>Player 1 Name</label>
+        <input type="text" id="p1-name" placeholder="Player 1" maxlength="16">
+      </div>
+      <div class="setup-field p2-field">
+        <label>Player 2 Name</label>
+        <input type="text" id="p2-name" placeholder="Player 2" maxlength="16">
+      </div>
+    </div>
+
+    <div class="setup-options">
+      <div class="option-group">
+        <label>Difficulty</label>
+        <div class="btn-group">
+          <button class="opt-btn diff-btn easy" onclick="selectDiff('easy',this)">🟢 Easy</button>
+          <button class="opt-btn diff-btn medium" onclick="selectDiff('medium',this)">🟡 Medium</button>
+          <button class="opt-btn diff-btn hard" onclick="selectDiff('hard',this)">🔴 Hard</button>
+          <button class="opt-btn diff-btn mixed active" onclick="selectDiff('mixed',this)">🌈 Mixed</button>
+        </div>
+      </div>
+      <div class="option-group">
+        <label>Questions Each</label>
+        <div class="btn-group">
+          <button class="opt-btn qcount-btn" onclick="selectQ(5,this)">5</button>
+          <button class="opt-btn qcount-btn active" onclick="selectQ(10,this)">10</button>
+          <button class="opt-btn qcount-btn" onclick="selectQ(15,this)">15</button>
+          <button class="opt-btn qcount-btn" onclick="selectQ(20,this)">20</button>
+        </div>
+      </div>
+    </div>
+
+    <button class="start-btn" onclick="startGame()">🚀 Launch Game!</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     GAME SCREEN
+══════════════════════════════════════════ -->
+<div id="game-screen">
+  <div class="game-layout">
+
+    <!-- PLAYER 1 -->
+    <div class="player-panel p1-panel" id="p1-panel">
+      <div class="player-header">
+        <div>
+          <div class="player-name" id="p1-display-name">Player 1</div>
+          <span class="diff-badge easy" id="p1-diff-badge">Easy</span>
+        </div>
+        <div class="score-badge" id="p1-score-display">0</div>
+      </div>
+
+      <div class="question-card" id="p1-question-card">
+        <div class="question-label">Is this compound…</div>
+        <div class="compound-name" id="p1-compound"></div>
+        <div class="compound-formula" id="p1-formula"></div>
+        <div class="q-counter" id="p1-q-counter"></div>
+      </div>
+
+      <div class="timer-bar-wrap">
+        <div class="timer-bar" id="p1-timer-bar" style="width:100%"></div>
+      </div>
+
+      <div class="answer-buttons" id="p1-answer-btns">
+        <button class="answer-btn btn-soluble" onclick="submitAnswer(1,'Soluble')">
+          <span class="btn-icon">✅</span>
+          <span class="btn-label">SOLUBLE</span>
+        </button>
+        <button class="answer-btn btn-insoluble" onclick="submitAnswer(1,'Insoluble')">
+          <span class="btn-icon">❌</span>
+          <span class="btn-label">INSOLUBLE</span>
+        </button>
+      </div>
+
+      <div class="feedback-area feedback-empty" id="p1-feedback">Tap your answer!</div>
+
+      <div class="history-label">📋 Question History</div>
+      <div class="history-log" id="p1-history"></div>
+    </div>
+
+    <!-- CENTRE -->
+    <div class="centre-col">
+      <div class="centre-title">🚀 Rocket Race</div>
+
+      <div class="rocket-stage">
+        <div class="launch-pad">
+          <div class="rocket-lane">
+            <div class="stars-top" id="p1-stars">🌟✨⭐</div>
+            <div class="rocket-track"></div>
+            <div class="fuel-bar-wrap">
+              <div class="fuel-bar p1-fuel" id="p1-fuel" style="height:0%"></div>
+            </div>
+            <div class="rocket-emoji p1-rocket" id="p1-rocket">🚀</div>
+            <div class="rocket-flame">🔥</div>
+            <div class="rocket-label p1-rocket-label" id="p1-rocket-name">P1</div>
+          </div>
+
+          <div class="vs-badge">VS</div>
+
+          <div class="rocket-lane">
+            <div class="stars-top" id="p2-stars">🌟✨⭐</div>
+            <div class="rocket-track"></div>
+            <div class="fuel-bar-wrap">
+              <div class="fuel-bar p2-fuel" id="p2-fuel" style="height:0%"></div>
+            </div>
+            <div class="rocket-emoji p2-rocket" id="p2-rocket">🚀</div>
+            <div class="rocket-flame">🔥</div>
+            <div class="rocket-label p2-rocket-label" id="p2-rocket-name">P2</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="centre-scores">
+        <div class="centre-score p1-cscore" id="p1-cscore">0</div>
+        <div class="score-divider">–</div>
+        <div class="centre-score p2-cscore" id="p2-cscore">0</div>
+      </div>
+
+      <div class="advantage-banner advantage-tie" id="advantage-banner">All tied up!</div>
+
+      <button class="end-btn" onclick="showEndScreen()">🏁 Show Final Results</button>
+    </div>
+
+    <!-- PLAYER 2 -->
+    <div class="player-panel p2-panel" id="p2-panel">
+      <div class="player-header">
+        <div>
+          <div class="player-name" id="p2-display-name">Player 2</div>
+          <span class="diff-badge easy" id="p2-diff-badge">Easy</span>
+        </div>
+        <div class="score-badge" id="p2-score-display">0</div>
+      </div>
+
+      <div class="question-card" id="p2-question-card">
+        <div class="question-label">Is this compound…</div>
+        <div class="compound-name" id="p2-compound"></div>
+        <div class="compound-formula" id="p2-formula"></div>
+        <div class="q-counter" id="p2-q-counter"></div>
+      </div>
+
+      <div class="timer-bar-wrap">
+        <div class="timer-bar" id="p2-timer-bar" style="width:100%"></div>
+      </div>
+
+      <div class="answer-buttons" id="p2-answer-btns">
+        <button class="answer-btn btn-soluble" onclick="submitAnswer(2,'Soluble')">
+          <span class="btn-icon">✅</span>
+          <span class="btn-label">SOLUBLE</span>
+        </button>
+        <button class="answer-btn btn-insoluble" onclick="submitAnswer(2,'Insoluble')">
+          <span class="btn-icon">❌</span>
+          <span class="btn-label">INSOLUBLE</span>
+        </button>
+      </div>
+
+      <div class="feedback-area feedback-empty" id="p2-feedback">Tap your answer!</div>
+
+      <div class="history-label">📋 Question History</div>
+      <div class="history-log" id="p2-history"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     END SCREEN
+══════════════════════════════════════════ -->
+<div id="end-screen" style="display:none; position:fixed; inset:0; background:rgba(10,10,20,0.95); z-index:100; align-items:center; justify-content:center; flex-direction:column;">
+  <div class="end-card">
+    <div class="trophy" id="end-trophy">🏆</div>
+    <div class="winner-label">Winner</div>
+    <div class="winner-name" id="end-winner-name" style="color:#FFD700;">—</div>
+    <div class="final-scores">
+      <div class="final-score-box">
+        <div class="final-score-name" id="end-p1-name" style="color:var(--p1);">P1</div>
+        <div class="final-score-num" id="end-p1-score" style="color:var(--p1);">0</div>
+      </div>
+      <div class="final-score-box">
+        <div class="final-score-name" id="end-p2-name" style="color:var(--p2);">P2</div>
+        <div class="final-score-num" id="end-p2-score" style="color:var(--p2);">0</div>
+      </div>
+    </div>
+    <button class="play-again-btn" onclick="playAgain()">🔄 Play Again</button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+//  QUESTION BANK
+// ══════════════════════════════════════════
+const QUESTIONS = [
+  // ── EASY ──────────────────────────────────────────────────────────────
+  // Nitrates (all soluble)
+  { name:"Sodium nitrate",       formula:"NaNO₃",          answer:"Soluble",   diff:"easy",   group:"Nitrates" },
+  { name:"Potassium nitrate",    formula:"KNO₃",           answer:"Soluble",   diff:"easy",   group:"Nitrates" },
+  { name:"Calcium nitrate",      formula:"Ca(NO₃)₂",       answer:"Soluble",   diff:"easy",   group:"Nitrates" },
+  { name:"Copper(II) nitrate",   formula:"Cu(NO₃)₂",       answer:"Soluble",   diff:"easy",   group:"Nitrates" },
+  { name:"Lead(II) nitrate",     formula:"Pb(NO₃)₂",       answer:"Soluble",   diff:"easy",   group:"Nitrates" },
+  // Chlorides
+  { name:"Sodium chloride",      formula:"NaCl",            answer:"Soluble",   diff:"easy",   group:"Chlorides" },
+  { name:"Potassium chloride",   formula:"KCl",             answer:"Soluble",   diff:"easy",   group:"Chlorides" },
+  { name:"Ammonium chloride",    formula:"NH₄Cl",           answer:"Soluble",   diff:"easy",   group:"Chlorides" },
+  { name:"Lead(II) chloride",    formula:"PbCl₂",           answer:"Insoluble", diff:"easy",   group:"Chlorides" },
+  { name:"Silver chloride",      formula:"AgCl",            answer:"Insoluble", diff:"easy",   group:"Chlorides" },
+  // Sulfates
+  { name:"Sodium sulfate",       formula:"Na₂SO₄",         answer:"Soluble",   diff:"easy",   group:"Sulfates" },
+  { name:"Copper(II) sulfate",   formula:"CuSO₄",          answer:"Soluble",   diff:"easy",   group:"Sulfates" },
+  { name:"Ammonium sulfate",     formula:"(NH₄)₂SO₄",      answer:"Soluble",   diff:"easy",   group:"Sulfates" },
+  { name:"Barium sulfate",       formula:"BaSO₄",          answer:"Insoluble", diff:"easy",   group:"Sulfates" },
+  { name:"Lead(II) sulfate",     formula:"PbSO₄",          answer:"Insoluble", diff:"easy",   group:"Sulfates" },
+  // Carbonates
+  { name:"Sodium carbonate",     formula:"Na₂CO₃",         answer:"Soluble",   diff:"easy",   group:"Carbonates" },
+  { name:"Potassium carbonate",  formula:"K₂CO₃",          answer:"Soluble",   diff:"easy",   group:"Carbonates" },
+  { name:"Copper(II) carbonate", formula:"CuCO₃",          answer:"Insoluble", diff:"easy",   group:"Carbonates" },
+  { name:"Calcium carbonate",    formula:"CaCO₃",          answer:"Insoluble", diff:"easy",   group:"Carbonates" },
+  { name:"Lead(II) carbonate",   formula:"PbCO₃",          answer:"Insoluble", diff:"easy",   group:"Carbonates" },
+  // Hydroxides
+  { name:"Sodium hydroxide",     formula:"NaOH",           answer:"Soluble",   diff:"easy",   group:"Hydroxides" },
+  { name:"Potassium hydroxide",  formula:"KOH",            answer:"Soluble",   diff:"easy",   group:"Hydroxides" },
+  { name:"Ammonium hydroxide",   formula:"NH₄OH",          answer:"Soluble",   diff:"easy",   group:"Hydroxides" },
+  { name:"Copper(II) hydroxide", formula:"Cu(OH)₂",        answer:"Insoluble", diff:"easy",   group:"Hydroxides" },
+  { name:"Iron(III) hydroxide",  formula:"Fe(OH)₃",        answer:"Insoluble", diff:"easy",   group:"Hydroxides" },
+  // Oxides
+  { name:"Sodium oxide",         formula:"Na₂O",           answer:"Soluble",   diff:"easy",   group:"Oxides" },
+  { name:"Potassium oxide",      formula:"K₂O",            answer:"Soluble",   diff:"easy",   group:"Oxides" },
+  { name:"Copper(II) oxide",     formula:"CuO",            answer:"Insoluble", diff:"easy",   group:"Oxides" },
+  { name:"Iron(III) oxide",      formula:"Fe₂O₃",          answer:"Insoluble", diff:"easy",   group:"Oxides" },
+  { name:"Calcium oxide",        formula:"CaO",            answer:"Insoluble", diff:"easy",   group:"Oxides" },
+
+  // ── MEDIUM ────────────────────────────────────────────────────────────
+  { name:"Zinc nitrate",         formula:"Zn(NO₃)₂",       answer:"Soluble",   diff:"medium", group:"Nitrates" },
+  { name:"Iron(II) nitrate",     formula:"Fe(NO₃)₂",       answer:"Soluble",   diff:"medium", group:"Nitrates" },
+  { name:"Magnesium nitrate",    formula:"Mg(NO₃)₂",       answer:"Soluble",   diff:"medium", group:"Nitrates" },
+  { name:"Barium nitrate",       formula:"Ba(NO₃)₂",       answer:"Soluble",   diff:"medium", group:"Nitrates" },
+  { name:"Calcium chloride",     formula:"CaCl₂",          answer:"Soluble",   diff:"medium", group:"Chlorides" },
+  { name:"Magnesium chloride",   formula:"MgCl₂",          answer:"Soluble",   diff:"medium", group:"Chlorides" },
+  { name:"Iron(II) chloride",    formula:"FeCl₂",          answer:"Soluble",   diff:"medium", group:"Chlorides" },
+  { name:"Iron(III) chloride",   formula:"FeCl₃",          answer:"Soluble",   diff:"medium", group:"Chlorides" },
+  { name:"Calcium sulfate",      formula:"CaSO₄",          answer:"Insoluble", diff:"medium", group:"Sulfates" },
+  { name:"Magnesium sulfate",    formula:"MgSO₄",          answer:"Soluble",   diff:"medium", group:"Sulfates" },
+  { name:"Zinc sulfate",         formula:"ZnSO₄",          answer:"Soluble",   diff:"medium", group:"Sulfates" },
+  { name:"Iron(II) sulfate",     formula:"FeSO₄",          answer:"Soluble",   diff:"medium", group:"Sulfates" },
+  { name:"Ammonium carbonate",   formula:"(NH₄)₂CO₃",      answer:"Soluble",   diff:"medium", group:"Carbonates" },
+  { name:"Zinc carbonate",       formula:"ZnCO₃",          answer:"Insoluble", diff:"medium", group:"Carbonates" },
+  { name:"Magnesium carbonate",  formula:"MgCO₃",          answer:"Insoluble", diff:"medium", group:"Carbonates" },
+  { name:"Iron(II) carbonate",   formula:"FeCO₃",          answer:"Insoluble", diff:"medium", group:"Carbonates" },
+  { name:"Calcium hydroxide",    formula:"Ca(OH)₂",        answer:"Insoluble", diff:"medium", group:"Hydroxides" },
+  { name:"Magnesium hydroxide",  formula:"Mg(OH)₂",        answer:"Insoluble", diff:"medium", group:"Hydroxides" },
+  { name:"Zinc hydroxide",       formula:"Zn(OH)₂",        answer:"Insoluble", diff:"medium", group:"Hydroxides" },
+  { name:"Iron(II) hydroxide",   formula:"Fe(OH)₂",        answer:"Insoluble", diff:"medium", group:"Hydroxides" },
+
+  // ── HARD ──────────────────────────────────────────────────────────────
+  { name:"Silver nitrate",       formula:"AgNO₃",          answer:"Soluble",   diff:"hard",   group:"Nitrates" },
+  { name:"Silver sulfate",       formula:"Ag₂SO₄",         answer:"Soluble",   diff:"hard",   group:"Sulfates" },
+  { name:"Barium chloride",      formula:"BaCl₂",          answer:"Soluble",   diff:"hard",   group:"Chlorides" },
+  { name:"Barium carbonate",     formula:"BaCO₃",          answer:"Insoluble", diff:"hard",   group:"Carbonates" },
+  { name:"Barium hydroxide",     formula:"Ba(OH)₂",        answer:"Soluble",   diff:"hard",   group:"Hydroxides" },
+  { name:"Lead(II) hydroxide",   formula:"Pb(OH)₂",        answer:"Insoluble", diff:"hard",   group:"Hydroxides" },
+  { name:"Zinc oxide",           formula:"ZnO",            answer:"Insoluble", diff:"hard",   group:"Oxides" },
+  { name:"Magnesium oxide",      formula:"MgO",            answer:"Insoluble", diff:"hard",   group:"Oxides" },
+  { name:"Iron(II) oxide",       formula:"FeO",            answer:"Insoluble", diff:"hard",   group:"Oxides" },
+  { name:"Iron(III) sulfate",    formula:"Fe₂(SO₄)₃",      answer:"Soluble",   diff:"hard",   group:"Sulfates" },
+];
+
+// ══════════════════════════════════════════
+//  GAME STATE
+// ══════════════════════════════════════════
+let state = {
+  p1Name:'', p2Name:'',
+  difficulty:'mixed',
+  questionCount:10,
+  p1Score:0, p2Score:0,
+  p1QIndex:0, p2QIndex:0,
+  p1Questions:[], p2Questions:[],
+  p1Done:false, p2Done:false,
+  p1Locked:false, p2Locked:false,
+  p1Timer:null, p2Timer:null,
+  p1TimeLeft:10, p2TimeLeft:10,
+  TIME_LIMIT:10
+};
+
+// ══════════════════════════════════════════
+//  SETUP
+// ══════════════════════════════════════════
+function selectDiff(d, btn) {
+  document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  state.difficulty = d;
+}
+
+function selectQ(n, btn) {
+  document.querySelectorAll('.qcount-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  state.questionCount = n;
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length-1; i>0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function getPool(diff) {
+  if (diff === 'mixed') return QUESTIONS;
+  return QUESTIONS.filter(q => q.diff === diff);
+}
+
+function buildQuestions(diff, count, exclude) {
+  let pool = getPool(diff);
+  // For mixed: sort easy→medium→hard
+  if (diff === 'mixed') {
+    pool = [
+      ...shuffle(pool.filter(q=>q.diff==='easy')),
+      ...shuffle(pool.filter(q=>q.diff==='medium')),
+      ...shuffle(pool.filter(q=>q.diff==='hard'))
+    ];
+  } else {
+    pool = shuffle(pool);
+  }
+  // Exclude questions already in the other player's set
+  const excludeNames = new Set(exclude.map(q=>q.name));
+  pool = pool.filter(q => !excludeNames.has(q.name));
+  // If not enough unique, allow repeats from full pool
+  if (pool.length < count) {
+    const full = shuffle(getPool(diff)).filter(q=>!excludeNames.has(q.name));
+    pool = [...pool, ...full];
+  }
+  return pool.slice(0, count);
+}
+
+function startGame() {
+  state.p1Name = document.getElementById('p1-name').value.trim() || 'Player 1';
+  state.p2Name = document.getElementById('p2-name').value.trim() || 'Player 2';
+
+  // Build non-overlapping question sets
+  const p1Q = buildQuestions(state.difficulty, state.questionCount, []);
+  const p2Q = buildQuestions(state.difficulty, state.questionCount, p1Q);
+  state.p1Questions = p1Q;
+  state.p2Questions = p2Q;
+
+  state.p1Score = 0; state.p2Score = 0;
+  state.p1QIndex = 0; state.p2QIndex = 0;
+  state.p1Done = false; state.p2Done = false;
+
+  document.getElementById('setup-screen').style.display = 'none';
+  document.getElementById('game-screen').style.display = 'block';
+
+  // Set names
+  document.getElementById('p1-display-name').textContent = state.p1Name;
+  document.getElementById('p2-display-name').textContent = state.p2Name;
+  document.getElementById('p1-rocket-name').textContent = state.p1Name.substring(0,8);
+  document.getElementById('p2-rocket-name').textContent = state.p2Name.substring(0,8);
+
+  updateScoreDisplay();
+  loadQuestion(1);
+  loadQuestion(2);
+}
+
+// ══════════════════════════════════════════
+//  QUESTION LOADING
+// ══════════════════════════════════════════
+function loadQuestion(player) {
+  const p = player === 1 ? 'p1' : 'p2';
+  // Guard: if player already finished, do nothing
+  if (player === 1 && state.p1Done) return;
+  if (player === 2 && state.p2Done) return;
+
+  const questions = player === 1 ? state.p1Questions : state.p2Questions;
+  const idx = player === 1 ? state.p1QIndex : state.p2QIndex;
+
+  clearTimer(player);
+
+  if (idx >= questions.length) {
+    finishPlayer(player);
+    return;
+  }
+
+  const q = questions[idx];
+
+  // Restore question card inner structure if it was replaced by finishPlayer
+  const card = document.getElementById(`${p}-question-card`);
+  if (!document.getElementById(`${p}-compound`)) {
+    card.innerHTML = `
+      <div class="question-label">Is this compound…</div>
+      <div class="compound-name" id="${p}-compound"></div>
+      <div class="compound-formula" id="${p}-formula"></div>
+      <div class="q-counter" id="${p}-q-counter"></div>
+    `;
+  }
+
+  document.getElementById(`${p}-compound`).textContent = q.name;
+  document.getElementById(`${p}-formula`).textContent = q.formula;
+  document.getElementById(`${p}-q-counter`).textContent = `Question ${idx+1} of ${questions.length}`;
+
+  // Diff badge
+  const badge = document.getElementById(`${p}-diff-badge`);
+  badge.textContent = q.diff.charAt(0).toUpperCase()+q.diff.slice(1);
+  badge.className = `diff-badge ${q.diff}`;
+
+  // Reset UI
+  document.getElementById(`${p}-feedback`).className = 'feedback-area feedback-empty';
+  document.getElementById(`${p}-feedback`).textContent = 'Tap your answer!';
+  unlockButtons(player);
+
+  if (player === 1) state.p1Locked = false; else state.p2Locked = false;
+
+  startTimer(player);
+}
+
+function finishPlayer(player) {
+  const p = player === 1 ? 'p1' : 'p2';
+  if (player === 1) { if (state.p1Done) return; state.p1Done = true; }
+  else { if (state.p2Done) return; state.p2Done = true; }
+  clearTimer(player);
+
+  // Replace inner content of question card — safe because player is done
+  document.getElementById(`${p}-question-card`).innerHTML = `
+    <div class="finished-label">🎉 All Done!</div>
+    <div style="font-size:0.8rem;color:var(--text-dim);margin-top:4px;">Waiting for opponent…</div>
+  `;
+  lockButtons(player);
+  document.getElementById(`${p}-timer-bar`).style.width = '0%';
+  document.getElementById(`${p}-feedback`).className = 'feedback-area feedback-correct';
+  document.getElementById(`${p}-feedback`).textContent = `Final score: ${player===1?state.p1Score:state.p2Score} ✅`;
+}
+
+// ══════════════════════════════════════════
+//  TIMER
+// ══════════════════════════════════════════
+function startTimer(player) {
+  const p = player === 1 ? 'p1' : 'p2';
+  let timeLeft = state.TIME_LIMIT;
+  const bar = document.getElementById(`${p}-timer-bar`);
+  bar.style.transition = 'none';
+  bar.style.width = '100%';
+
+  if (player === 1) state.p1TimeLeft = timeLeft; else state.p2TimeLeft = timeLeft;
+
+  const tick = () => {
+    timeLeft--;
+    const pct = (timeLeft / state.TIME_LIMIT) * 100;
+    bar.style.transition = 'width 1s linear';
+    bar.style.width = pct + '%';
+    // colour warning
+    if (timeLeft <= 3) bar.style.background = '#e74c3c';
+    else if (timeLeft <= 6) bar.style.background = '#f39c12';
+    else bar.style.background = player===1 ? 'var(--p1)' : 'var(--p2)';
+
+    if (timeLeft <= 0) {
+      timeOut(player);
+      return;
+    }
+    const timer = setTimeout(tick, 1000);
+    if (player === 1) state.p1Timer = timer; else state.p2Timer = timer;
+  };
+
+  const timer = setTimeout(tick, 1000);
+  if (player === 1) state.p1Timer = timer; else state.p2Timer = timer;
+}
+
+function clearTimer(player) {
+  if (player === 1) { clearTimeout(state.p1Timer); state.p1Timer = null; }
+  else { clearTimeout(state.p2Timer); state.p2Timer = null; }
+}
+
+function timeOut(player) {
+  const p = player === 1 ? 'p1' : 'p2';
+  const questions = player === 1 ? state.p1Questions : state.p2Questions;
+  const idx = player === 1 ? state.p1QIndex : state.p2QIndex;
+  const q = questions[idx];
+
+  lockButtons(player);
+  const fb = document.getElementById(`${p}-feedback`);
+  fb.className = 'feedback-area feedback-timeout';
+  fb.textContent = `⏱️ Time's up! It was ${q.answer}.`;
+
+  addHistoryEntry(player, q, '⏭️ Timed out', 'timeout', `Correct: ${q.answer}`);
+
+  setTimeout(() => {
+    if (player === 1) state.p1QIndex++; else state.p2QIndex++;
+    loadQuestion(player);
+  }, 900);
+}
+
+// ══════════════════════════════════════════
+//  ANSWER SUBMISSION
+// ══════════════════════════════════════════
+function submitAnswer(player, answer) {
+  const locked = player === 1 ? state.p1Locked : state.p2Locked;
+  if (locked) return;
+
+  const p = player === 1 ? 'p1' : 'p2';
+  const questions = player === 1 ? state.p1Questions : state.p2Questions;
+  const idx = player === 1 ? state.p1QIndex : state.p2QIndex;
+  const q = questions[idx];
+
+  clearTimer(player);
+  lockButtons(player);
+  if (player === 1) state.p1Locked = true; else state.p2Locked = true;
+
+  const fb = document.getElementById(`${p}-feedback`);
+
+  if (answer === q.answer) {
+    // CORRECT
+    if (player === 1) state.p1Score++; else state.p2Score++;
+    fb.className = 'feedback-area feedback-correct';
+    fb.textContent = `✅ Correct! ${q.name} is ${q.answer}.`;
+
+    addHistoryEntry(player, q, '✅ Correct', 'correct', `Your answer: ${answer}`);
+    updateScoreDisplay();
+    animateRocket(player);
+
+    setTimeout(() => {
+      if (player === 1) state.p1QIndex++; else state.p2QIndex++;
+      loadQuestion(player);
+    }, 700);
+  } else {
+    // WRONG
+    fb.className = 'feedback-area feedback-wrong';
+    fb.textContent = `❌ Not quite! ${q.name} is actually ${q.answer}.`;
+
+    addHistoryEntry(player, q, '❌ Wrong', 'wrong', `Your answer: ${answer} | Correct: ${q.answer}`);
+
+    setTimeout(() => {
+      if (player === 1) state.p1QIndex++; else state.p2QIndex++;
+      loadQuestion(player);
+    }, 900);
+  }
+}
+
+// ══════════════════════════════════════════
+//  HISTORY LOG
+// ══════════════════════════════════════════
+function addHistoryEntry(player, q, outcome, cls, detail) {
+  const p = player === 1 ? 'p1' : 'p2';
+  const log = document.getElementById(`${p}-history`);
+  const entry = document.createElement('div');
+  entry.className = `log-entry ${cls}`;
+  entry.innerHTML = `
+    <div class="log-compound">${q.name} (${q.formula})</div>
+    <div class="log-attempts">${detail}</div>
+    <div class="log-outcome">${outcome}</div>
+  `;
+  log.prepend(entry);
+}
+
+// ══════════════════════════════════════════
+//  BUTTON LOCKS
+// ══════════════════════════════════════════
+function lockButtons(player) {
+  const p = player === 1 ? 'p1' : 'p2';
+  document.querySelectorAll(`#${p}-answer-btns .answer-btn`).forEach(b => b.disabled = true);
+}
+
+function unlockButtons(player) {
+  const p = player === 1 ? 'p1' : 'p2';
+  document.querySelectorAll(`#${p}-answer-btns .answer-btn`).forEach(b => b.disabled = false);
+}
+
+// ══════════════════════════════════════════
+//  SCOREBOARD & ROCKETS
+// ══════════════════════════════════════════
+function updateScoreDisplay() {
+  const s1 = state.p1Score, s2 = state.p2Score;
+  const maxQ = state.questionCount;
+
+  document.getElementById('p1-score-display').textContent = s1;
+  document.getElementById('p2-score-display').textContent = s2;
+  document.getElementById('p1-cscore').textContent = s1;
+  document.getElementById('p2-cscore').textContent = s2;
+
+  // Fuel bars (based on score out of total questions)
+  const p1Pct = Math.min((s1/maxQ)*100, 100);
+  const p2Pct = Math.min((s2/maxQ)*100, 100);
+  document.getElementById('p1-fuel').style.height = p1Pct + '%';
+  document.getElementById('p2-fuel').style.height = p2Pct + '%';
+
+  // Advantage banner
+  const banner = document.getElementById('advantage-banner');
+  if (s1 > s2) {
+    banner.className = 'advantage-banner advantage-p1';
+    banner.textContent = `🚀 ${state.p1Name} leads!`;
+  } else if (s2 > s1) {
+    banner.className = 'advantage-banner advantage-p2';
+    banner.textContent = `🚀 ${state.p2Name} leads!`;
+  } else {
+    banner.className = 'advantage-banner advantage-tie';
+    banner.textContent = 'All tied up!';
+  }
+}
+
+function animateRocket(player) {
+  const p = player === 1 ? 'p1' : 'p2';
+  const rocket = document.getElementById(`${p}-rocket`);
+  const score = player === 1 ? state.p1Score : state.p2Score;
+  const maxQ = state.questionCount;
+
+  // Move rocket up based on score
+  const maxLift = 160; // px
+  const lift = Math.min((score / maxQ) * maxLift, maxLift);
+  rocket.style.marginBottom = lift + 'px';
+
+  // Pulse
+  rocket.classList.remove('pulse-correct');
+  void rocket.offsetWidth;
+  rocket.classList.add('pulse-correct');
+
+  // Stars at top if high score
+  if (score >= maxQ * 0.8) {
+    document.getElementById(`${p}-stars`).style.opacity = '1';
+  }
+}
+
+// ══════════════════════════════════════════
+//  END SCREEN
+// ══════════════════════════════════════════
+function showEndScreen() {
+  const s1 = state.p1Score, s2 = state.p2Score;
+
+  document.getElementById('end-p1-name').textContent = state.p1Name;
+  document.getElementById('end-p2-name').textContent = state.p2Name;
+  document.getElementById('end-p1-score').textContent = s1;
+  document.getElementById('end-p2-score').textContent = s2;
+
+  let winnerName, trophy;
+  if (s1 > s2) {
+    winnerName = state.p1Name;
+    document.getElementById('end-winner-name').style.color = 'var(--p1)';
+    trophy = '🏆';
+  } else if (s2 > s1) {
+    winnerName = state.p2Name;
+    document.getElementById('end-winner-name').style.color = 'var(--p2)';
+    trophy = '🏆';
+  } else {
+    winnerName = "It's a Draw!";
+    document.getElementById('end-winner-name').style.color = '#FFD700';
+    trophy = '🤝';
+  }
+
+  document.getElementById('end-winner-name').textContent = winnerName;
+  document.getElementById('end-trophy').textContent = trophy;
+
+  const endScreen = document.getElementById('end-screen');
+  endScreen.style.display = 'flex';
+
+  launchBlastOff();
+  spawnConfetti();
+}
+
+function launchBlastOff() {
+  ['p1','p2'].forEach(p => {
+    const rocket = document.getElementById(`${p}-rocket`);
+    rocket.classList.add('blast-off');
+  });
+}
+
+function spawnConfetti() {
+  const colours = ['#FF6B9D','#4ECDC4','#FFD700','#A8E6CF','#FF8B94','#88D8B0','#FFAAA5','#FFD3B6'];
+  for (let i=0; i<80; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti-piece';
+    c.style.left = Math.random()*100 + 'vw';
+    c.style.background = colours[Math.floor(Math.random()*colours.length)];
+    c.style.width = (Math.random()*10+6) + 'px';
+    c.style.height = (Math.random()*10+6) + 'px';
+    c.style.borderRadius = Math.random()>0.5 ? '50%' : '2px';
+    c.style.animationDuration = (Math.random()*2+2) + 's';
+    c.style.animationDelay = (Math.random()*1.5) + 's';
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 5000);
+  }
+}
+
+function playAgain() {
+  document.getElementById('end-screen').style.display = 'none';
+  document.getElementById('game-screen').style.display = 'none';
+  document.getElementById('setup-screen').style.display = 'flex';
+
+  // Reset history logs
+  document.getElementById('p1-history').innerHTML = '';
+  document.getElementById('p2-history').innerHTML = '';
+
+  // Reset rockets
+  ['p1','p2'].forEach(p => {
+    const r = document.getElementById(`${p}-rocket`);
+    r.classList.remove('blast-off');
+    r.style.marginBottom = '0px';
+    document.getElementById(`${p}-stars`).style.opacity = '0';
+    document.getElementById(`${p}-fuel`).style.height = '0%';
+  });
+}
+
+// Prevent pinch zoom
+document.addEventListener('touchmove', e => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
+document.addEventListener('gesturestart', e => e.preventDefault());
+</script>
+</body>
+</html>

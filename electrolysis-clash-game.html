@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Electrolysis Clash – Evergreen Secondary School</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --p1: #FF6B9D;
+    --p1-light: #FFB3CF;
+    --p1-dark: #d94f7e;
+    --p2: #4ECDC4;
+    --p2-light: #A8EDEA;
+    --p2-dark: #2eaaa1;
+    --bg: #1a1a2e;
+    --centre-bg: #2a2a4a;
+    --card: #252540;
+    --text: #f0f0ff;
+    --text-muted: #9999bb;
+    --correct: #51cf66;
+    --wrong: #ff6b6b;
+    --skipped: #868e96;
+    --gold: #FFD700;
+    --radius: 16px;
+    --shadow: 0 6px 0 rgba(0,0,0,0.35);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: 'Nunito', sans-serif; touch-action: manipulation; }
+  h1, h2, h3, .score-val, .racer-score { font-family: 'Fredoka One', cursive; }
+
+  /* ===== SCREENS ===== */
+  .screen { display: none; width: 100%; height: 100%; }
+  .screen.active { display: flex; }
+
+  /* ===== SETUP SCREEN ===== */
+  #setup-screen {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow-y: auto;
+    padding: 20px;
+    gap: 16px;
+  }
+  .setup-card {
+    background: var(--card);
+    border-radius: 24px;
+    padding: 28px 32px;
+    max-width: 480px;
+    width: 100%;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    border: 2px solid rgba(255,255,255,0.08);
+  }
+  .setup-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 2rem;
+    text-align: center;
+    background: linear-gradient(135deg, var(--p1), var(--p2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 4px;
+  }
+  .setup-subtitle { text-align: center; color: var(--text-muted); font-size: 0.85rem; margin-bottom: 20px; }
+  .input-row { display: flex; gap: 12px; margin-bottom: 14px; }
+  .input-group { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+  .input-group label { font-size: 0.8rem; font-weight: 700; letter-spacing: 0.5px; }
+  .p1-label { color: var(--p1); }
+  .p2-label { color: var(--p2); }
+  .styled-input {
+    padding: 10px 14px; border-radius: 12px; border: 2px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.07); color: var(--text); font-family: 'Nunito', sans-serif;
+    font-size: 1rem; font-weight: 700; outline: none; width: 100%;
+    transition: border-color 0.2s;
+  }
+  .styled-input:focus { border-color: var(--p1); }
+  .option-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+  .option-btn {
+    flex: 1; min-width: 60px; padding: 10px 8px; border-radius: 12px;
+    border: 2px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06);
+    color: var(--text); font-family: 'Nunito', sans-serif; font-size: 0.9rem;
+    font-weight: 700; cursor: pointer; transition: all 0.15s; text-align: center;
+  }
+  .option-btn.selected { border-color: var(--p2); background: rgba(78,205,196,0.2); color: var(--p2); }
+  .option-btn:active { transform: scale(0.95); }
+  .option-label { font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; letter-spacing: 0.5px; }
+  .start-btn {
+    width: 100%; padding: 16px; border-radius: 16px; border: none;
+    background: linear-gradient(135deg, var(--p1), var(--p2));
+    color: white; font-family: 'Fredoka One', cursive; font-size: 1.4rem;
+    cursor: pointer; box-shadow: var(--shadow); transition: all 0.15s;
+    margin-top: 8px;
+  }
+  .start-btn:active { transform: translateY(4px); box-shadow: none; }
+
+  .lb-preview-title {
+    font-family: 'Fredoka One', cursive; font-size: 1.1rem;
+    text-align: center; margin-bottom: 10px; color: var(--gold);
+  }
+
+  /* ===== GAME SCREEN ===== */
+  #game-screen { flex-direction: row; height: 100%; overflow: hidden; }
+
+  /* Player Panel */
+  .player-panel {
+    flex: 1; display: flex; flex-direction: column; padding: 10px;
+    gap: 8px; overflow: hidden; min-width: 0;
+  }
+  .p1-panel { border-right: 2px solid rgba(255,107,157,0.3); }
+  .p2-panel { border-left: 2px solid rgba(78,205,196,0.3); }
+
+  .player-header {
+    display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+    border-radius: var(--radius); flex-shrink: 0;
+  }
+  .p1-panel .player-header { background: rgba(255,107,157,0.15); border: 2px solid rgba(255,107,157,0.4); }
+  .p2-panel .player-header { background: rgba(78,205,196,0.15); border: 2px solid rgba(78,205,196,0.4); }
+
+  .player-avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
+  .p1-avatar { background: var(--p1); }
+  .p2-avatar { background: var(--p2); }
+
+  .player-name { font-family: 'Fredoka One', cursive; font-size: 1rem; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .score-badge {
+    font-family: 'Fredoka One', cursive; font-size: 1.3rem;
+    padding: 2px 12px; border-radius: 20px;
+  }
+  .p1-score-badge { background: var(--p1); color: white; }
+  .p2-score-badge { background: var(--p2); color: white; }
+
+  .q-card {
+    background: var(--card); border-radius: var(--radius); padding: 12px 14px;
+    flex-shrink: 0; border: 2px solid rgba(255,255,255,0.08);
+  }
+  .q-meta { font-size: 0.72rem; font-weight: 700; margin-bottom: 6px; display: flex; gap: 6px; align-items: center; }
+  .q-num { color: var(--text-muted); }
+  .diff-badge { padding: 2px 8px; border-radius: 10px; font-size: 0.68rem; }
+  .diff-easy { background: rgba(81,207,102,0.2); color: #51cf66; }
+  .diff-medium { background: rgba(255,212,59,0.2); color: #FFD43B; }
+  .diff-hard { background: rgba(255,107,107,0.2); color: #ff6b6b; }
+  .q-type-badge { padding: 2px 8px; border-radius: 10px; font-size: 0.68rem; background: rgba(255,255,255,0.1); color: var(--text-muted); }
+
+  .q-text { font-size: 0.9rem; font-weight: 700; line-height: 1.4; color: var(--text); }
+
+  .answers-area { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+  .ans-btn {
+    padding: 10px 14px; border-radius: 12px; border: 2px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.06); color: var(--text); font-family: 'Nunito', sans-serif;
+    font-size: 0.88rem; font-weight: 700; cursor: pointer; text-align: left;
+    transition: all 0.15s; box-shadow: 0 3px 0 rgba(0,0,0,0.3); display: flex; gap: 8px; align-items: center;
+  }
+  .ans-btn:active { transform: translateY(3px); box-shadow: none; }
+  .ans-btn.selected-correct { background: rgba(81,207,102,0.25); border-color: var(--correct); }
+  .ans-btn.selected-wrong { background: rgba(255,107,107,0.25); border-color: var(--wrong); }
+  .ans-btn.reveal-correct { background: rgba(81,207,102,0.15); border-color: var(--correct); }
+  .ans-btn:disabled { cursor: not-allowed; opacity: 0.7; }
+  .ans-letter { font-family: 'Fredoka One', cursive; font-size: 1rem; min-width: 20px; }
+
+  .tf-row { display: flex; gap: 10px; }
+  .tf-btn {
+    flex: 1; padding: 14px; border-radius: 14px; border: 2px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.06); color: var(--text); font-family: 'Fredoka One', cursive;
+    font-size: 1.2rem; cursor: pointer; text-align: center;
+    transition: all 0.15s; box-shadow: 0 4px 0 rgba(0,0,0,0.3);
+  }
+  .tf-btn:active { transform: translateY(4px); box-shadow: none; }
+  .tf-btn.selected-correct { background: rgba(81,207,102,0.25); border-color: var(--correct); }
+  .tf-btn.selected-wrong { background: rgba(255,107,107,0.25); border-color: var(--wrong); }
+  .tf-btn.reveal-correct { background: rgba(81,207,102,0.15); border-color: var(--correct); }
+  .tf-btn:disabled { cursor: not-allowed; opacity: 0.7; }
+
+  .hint-box {
+    padding: 8px 12px; border-radius: 10px; font-size: 0.8rem; font-weight: 600;
+    background: rgba(255,212,59,0.1); border: 1.5px solid rgba(255,212,59,0.4);
+    color: #FFD43B; min-height: 32px; flex-shrink: 0;
+  }
+  .hint-box.correct-fb { background: rgba(81,207,102,0.1); border-color: rgba(81,207,102,0.4); color: var(--correct); }
+  .hint-box.wrong-fb { background: rgba(255,107,107,0.1); border-color: rgba(255,107,107,0.4); color: var(--wrong); }
+  .hint-box.skip-fb { background: rgba(134,142,150,0.1); border-color: rgba(134,142,150,0.4); color: var(--skipped); }
+
+  /* Reference panel */
+  .ref-panel { flex-shrink: 0; }
+  .ref-toggle {
+    width: 100%; padding: 7px 12px; border-radius: 10px; border: none;
+    background: rgba(255,255,255,0.08); color: var(--text-muted); font-family: 'Nunito', sans-serif;
+    font-size: 0.78rem; font-weight: 700; cursor: pointer; text-align: left;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .ref-toggle:active { background: rgba(255,255,255,0.12); }
+  .ref-content {
+    display: none; background: rgba(255,255,255,0.04); border-radius: 0 0 10px 10px;
+    padding: 8px 10px; font-size: 0.72rem; color: var(--text-muted);
+    border: 1px solid rgba(255,255,255,0.08); border-top: none; line-height: 1.6;
+  }
+  .ref-content.open { display: block; }
+  .ref-section { margin-bottom: 4px; }
+  .ref-section span { color: var(--text); font-weight: 700; }
+
+  /* History log */
+  .history-log {
+    flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 5px;
+    scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent;
+  }
+  .history-log::-webkit-scrollbar { width: 4px; }
+  .history-log::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+  .hist-item {
+    padding: 7px 10px; border-radius: 8px; font-size: 0.72rem; font-weight: 600;
+    border-left: 4px solid;
+  }
+  .hist-correct { border-color: var(--correct); background: rgba(81,207,102,0.06); }
+  .hist-wrong { border-color: var(--wrong); background: rgba(255,107,107,0.06); }
+  .hist-skip { border-color: var(--skipped); background: rgba(134,142,150,0.06); }
+  .hist-q { color: var(--text-muted); margin-bottom: 2px; }
+  .hist-a { color: var(--text); }
+
+  /* ===== CENTRE COLUMN ===== */
+  .centre-col {
+    width: 220px; min-width: 180px; flex-shrink: 0;
+    background: var(--centre-bg); display: flex; flex-direction: column;
+    align-items: center; padding: 10px 8px; gap: 8px; overflow: hidden;
+    border-left: 1px solid rgba(255,255,255,0.06); border-right: 1px solid rgba(255,255,255,0.06);
+  }
+  .centre-title { font-family: 'Fredoka One', cursive; font-size: 1rem; background: linear-gradient(135deg, var(--p1), var(--p2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; text-align: center; }
+
+  /* Race track */
+  .race-track {
+    width: 100%; background: rgba(0,0,0,0.3); border-radius: 14px;
+    padding: 10px 8px; border: 1.5px solid rgba(255,255,255,0.08);
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .track-lane { display: flex; align-items: center; gap: 6px; position: relative; }
+  .racer-info { display: flex; flex-direction: column; align-items: flex-start; min-width: 50px; }
+  .racer-name { font-size: 0.65rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 50px; }
+  .racer-score { font-family: 'Fredoka One', cursive; font-size: 1.1rem; }
+  .p1-text { color: var(--p1); }
+  .p2-text { color: var(--p2); }
+
+  .track-bar { flex: 1; height: 28px; background: rgba(255,255,255,0.07); border-radius: 20px; position: relative; overflow: visible; }
+  .track-fill { height: 100%; border-radius: 20px; transition: width 0.5s cubic-bezier(0.34,1.56,0.64,1); }
+  .p1-fill { background: linear-gradient(90deg, var(--p1-dark), var(--p1)); }
+  .p2-fill { background: linear-gradient(90deg, var(--p2-dark), var(--p2)); }
+  .racer-emoji {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    font-size: 1.4rem; transition: left 0.5s cubic-bezier(0.34,1.56,0.64,1);
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+    pointer-events: none;
+  }
+
+  .advantage-banner {
+    text-align: center; font-size: 0.78rem; font-weight: 800;
+    padding: 6px 10px; border-radius: 10px; background: rgba(255,255,255,0.08);
+    color: var(--text-muted); min-height: 32px; display: flex; align-items: center; justify-content: center;
+  }
+
+  .progress-area { width: 100%; }
+  .prog-label { font-size: 0.68rem; color: var(--text-muted); font-weight: 700; margin-bottom: 4px; text-align: center; }
+  .prog-bars { display: flex; gap: 4px; }
+  .prog-track { flex: 1; display: flex; gap: 2px; }
+  .prog-dot { flex: 1; height: 6px; border-radius: 3px; background: rgba(255,255,255,0.12); }
+  .prog-dot.answered { background: var(--p1); }
+  .prog-dot.p2-answered { background: var(--p2); }
+  .prog-dot.correct { opacity: 1; }
+
+  .show-results-btn {
+    width: 100%; padding: 12px; border-radius: 14px; border: none;
+    background: linear-gradient(135deg, #6c63ff, #a855f7);
+    color: white; font-family: 'Fredoka One', cursive; font-size: 1rem;
+    cursor: pointer; box-shadow: var(--shadow); transition: all 0.15s;
+    margin-top: auto;
+  }
+  .show-results-btn:active { transform: translateY(4px); box-shadow: none; }
+
+  .school-credit { font-size: 0.6rem; color: var(--text-muted); text-align: center; opacity: 0.6; }
+
+  /* ===== END SCREEN ===== */
+  #end-screen {
+    flex-direction: column; align-items: center; justify-content: flex-start;
+    padding: 20px; overflow-y: auto; gap: 14px; background: var(--bg);
+  }
+  .trophy-section { text-align: center; }
+  .trophy-emoji { font-size: 4rem; display: block; animation: bounce 0.6s ease infinite alternate; }
+  @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-12px); } }
+  .winner-text { font-family: 'Fredoka One', cursive; font-size: 2rem; margin-top: 8px; }
+  .final-scores { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin-top: 8px; }
+  .final-score-card { padding: 14px 24px; border-radius: 16px; text-align: center; }
+  .p1-card { background: rgba(255,107,157,0.2); border: 2px solid var(--p1); }
+  .p2-card { background: rgba(78,205,196,0.2); border: 2px solid var(--p2); }
+  .final-score-name { font-size: 0.9rem; font-weight: 700; }
+  .final-score-pts { font-family: 'Fredoka One', cursive; font-size: 2.5rem; }
+  .play-again-btn {
+    padding: 14px 32px; border-radius: 16px; border: none;
+    background: linear-gradient(135deg, var(--p1), var(--p2));
+    color: white; font-family: 'Fredoka One', cursive; font-size: 1.3rem;
+    cursor: pointer; box-shadow: var(--shadow); transition: all 0.15s;
+  }
+  .play-again-btn:active { transform: translateY(4px); box-shadow: none; }
+
+  /* Confetti */
+  .confetti-piece {
+    position: fixed; width: 10px; height: 10px; border-radius: 2px;
+    pointer-events: none; animation: confetti-fall linear forwards;
+    z-index: 9999;
+  }
+  @keyframes confetti-fall {
+    0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+  }
+
+  /* Leaderboard */
+  .lb-container { width: 100%; max-width: 600px; }
+  .lb-title { font-family: 'Fredoka One', cursive; font-size: 1.3rem; color: var(--gold); text-align: center; margin-bottom: 10px; }
+  .lb-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+  .lb-table th { padding: 6px 8px; text-align: left; color: var(--text-muted); font-weight: 700; border-bottom: 1px solid rgba(255,255,255,0.1); }
+  .lb-table td { padding: 6px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .lb-table tr.new-entry td { animation: gold-glow 3s ease; background: rgba(255,215,0,0.1); }
+  @keyframes gold-glow { 0%,100% { background: transparent; } 50% { background: rgba(255,215,0,0.2); box-shadow: 0 0 12px rgba(255,215,0,0.3); } }
+  .rank-badge { font-family: 'Fredoka One', cursive; font-size: 0.9rem; }
+  .rank-1 { color: #FFD700; }
+  .rank-2 { color: #C0C0C0; }
+  .rank-3 { color: #CD7F32; }
+  .del-entry-btn {
+    background: transparent; border: 1px solid rgba(255,107,107,0.4); color: var(--wrong);
+    border-radius: 6px; padding: 2px 7px; font-size: 0.7rem; cursor: pointer; font-family: 'Nunito', sans-serif; font-weight: 700;
+  }
+  .del-entry-btn:active { background: rgba(255,107,107,0.15); }
+
+  /* Teacher PIN modal */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+    z-index: 10000; align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-card {
+    background: var(--card); border-radius: 20px; padding: 28px 32px;
+    max-width: 320px; width: 90%; text-align: center; border: 2px solid rgba(255,255,255,0.1);
+    box-shadow: 0 16px 48px rgba(0,0,0,0.6);
+  }
+  .modal-title { font-family: 'Fredoka One', cursive; font-size: 1.3rem; margin-bottom: 6px; }
+  .modal-sub { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 16px; }
+  .modal-input {
+    width: 100%; padding: 10px 14px; border-radius: 12px; border: 2px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.07); color: var(--text); font-family: 'Nunito', sans-serif;
+    font-size: 1.1rem; text-align: center; letter-spacing: 6px; outline: none; margin-bottom: 14px;
+  }
+  .modal-input:focus { border-color: var(--p1); }
+  .modal-btn-row { display: flex; gap: 10px; }
+  .modal-confirm-btn {
+    flex: 1; padding: 10px; border-radius: 12px; border: none;
+    background: var(--wrong); color: white; font-family: 'Fredoka One', cursive;
+    font-size: 1rem; cursor: pointer;
+  }
+  .modal-cancel-btn {
+    flex: 1; padding: 10px; border-radius: 12px; border: 2px solid rgba(255,255,255,0.2);
+    background: transparent; color: var(--text-muted); font-family: 'Fredoka One', cursive;
+    font-size: 1rem; cursor: pointer;
+  }
+  .modal-err { font-size: 0.8rem; color: var(--wrong); margin-top: 8px; min-height: 18px; }
+  .day-banner {
+    text-align: center; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 6px; font-weight: 700;
+  }
+
+  .clear-lb-btn {
+    padding: 8px 16px; border-radius: 10px; border: 1.5px solid rgba(255,107,107,0.5);
+    background: transparent; color: var(--wrong); font-family: 'Nunito', sans-serif;
+    font-size: 0.8rem; font-weight: 700; cursor: pointer; margin-top: 8px; display: block; margin-left: auto;
+  }
+  .clear-lb-btn:active { background: rgba(255,107,107,0.1); }
+
+  /* Score pop animation */
+  @keyframes score-pop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.4); }
+    100% { transform: scale(1); }
+  }
+  .score-pop { animation: score-pop 0.3s ease; }
+
+  /* Question progress dots */
+  .q-progress { display: flex; gap: 3px; flex-wrap: wrap; margin-bottom: 4px; }
+  .q-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.15); flex-shrink: 0; transition: background 0.3s; }
+  .q-dot.correct { background: var(--correct); }
+  .q-dot.wrong { background: var(--wrong); }
+  .q-dot.skipped { background: var(--skipped); }
+  .q-dot.current { background: var(--gold); animation: pulse 0.8s ease infinite; }
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+
+  .done-label { text-align: center; font-family: 'Fredoka One', cursive; font-size: 1.1rem; padding: 20px; color: var(--text-muted); }
+</style>
+</head>
+<body>
+
+<!-- SETUP SCREEN -->
+<div id="setup-screen" class="screen active">
+  <div class="setup-card">
+    <div class="setup-title">⚡ Electrolysis Clash</div>
+    <div class="setup-subtitle">Evergreen Secondary School · Created by Ms Teng</div>
+
+    <div class="input-row">
+      <div class="input-group">
+        <label class="p1-label">🩷 PLAYER 1 NAME</label>
+        <input id="p1-name" class="styled-input" maxlength="15" placeholder="Player 1" value="Player 1">
+      </div>
+      <div class="input-group">
+        <label class="p2-label">🩵 PLAYER 2 NAME</label>
+        <input id="p2-name" class="styled-input" maxlength="15" placeholder="Player 2" value="Player 2">
+      </div>
+    </div>
+
+    <div class="input-row">
+      <div class="input-group">
+        <label class="p1-label">🩷 P1 CLASS</label>
+        <input id="p1-class" class="styled-input" maxlength="10" placeholder="e.g. 3A1">
+      </div>
+      <div class="input-group">
+        <label class="p2-label">🩵 P2 CLASS</label>
+        <input id="p2-class" class="styled-input" maxlength="10" placeholder="e.g. 3B2">
+      </div>
+    </div>
+
+    <div class="option-label">DIFFICULTY</div>
+    <div class="option-row" id="diff-options">
+      <button class="option-btn" data-val="easy">🟢 Easy</button>
+      <button class="option-btn" data-val="medium">🟡 Medium</button>
+      <button class="option-btn" data-val="hard">🔴 Hard</button>
+      <button class="option-btn selected" data-val="mixed">🌈 Mixed</button>
+    </div>
+
+    <div class="option-label">QUESTIONS PER PLAYER</div>
+    <div class="option-row" id="qcount-options">
+      <button class="option-btn" data-val="5">5</button>
+      <button class="option-btn selected" data-val="10">10</button>
+      <button class="option-btn" data-val="15">15</button>
+      <button class="option-btn" data-val="20">20</button>
+    </div>
+
+    <button class="start-btn" onclick="startGame()">⚡ START GAME</button>
+  </div>
+
+  <div class="lb-container">
+    <div class="lb-title">🏆 All-Time Leaderboard</div>
+    <div id="setup-lb"></div>
+    <button class="clear-lb-btn" onclick="clearLeaderboard()">🗑️ Clear Leaderboard</button>
+  </div>
+</div>
+
+<!-- GAME SCREEN -->
+<div id="game-screen" class="screen">
+  <!-- Player 1 Panel -->
+  <div class="player-panel p1-panel" id="p1-panel">
+    <div class="player-header">
+      <div class="player-avatar p1-avatar">🩷</div>
+      <div class="player-name" id="p1-display-name">Player 1</div>
+      <div class="score-badge p1-score-badge" id="p1-score-display">0</div>
+    </div>
+
+    <div class="q-card" id="p1-q-card">
+      <div class="q-meta">
+        <span class="q-num" id="p1-q-num">Q1 of 10</span>
+        <span class="diff-badge diff-easy" id="p1-diff-badge">Easy</span>
+        <span class="q-type-badge" id="p1-type-badge">MCQ</span>
+      </div>
+      <div class="q-progress" id="p1-q-progress"></div>
+      <div class="q-text" id="p1-q-text">Loading...</div>
+    </div>
+
+    <div class="answers-area" id="p1-answers"></div>
+    <div class="hint-box" id="p1-hint">💡 Tap an answer to begin!</div>
+
+    <div class="ref-panel">
+      <button class="ref-toggle" onclick="toggleRef('p1')">📋 Chemical Reference <span id="p1-ref-arrow">▼</span></button>
+      <div class="ref-content" id="p1-ref-content">
+        <div class="ref-section">⚙️ <span>Electrodes:</span> Cathode (−) · Anode (+)</div>
+        <div class="ref-section">🔋 <span>Metals (reactivity ↓):</span> Na, K, Ca, Mg, Al, Zn, Fe, Cu, Ag</div>
+        <div class="ref-section">💨 <span>Gases:</span> H₂ (cathode, dilute) · O₂ (anode, dilute/dilute SO₄²⁻) · Cl₂ (anode, conc Cl⁻)</div>
+        <div class="ref-section">🧪 <span>Ions:</span> H⁺ OH⁻ Cu²⁺ Zn²⁺ Na⁺ Cl⁻ SO₄²⁻ NO₃⁻</div>
+        <div class="ref-section">🔑 <span>Key:</span> Oxidation @ Anode · Reduction @ Cathode</div>
+        <div class="ref-section">📌 <span>Selective discharge:</span> Higher conc Cl⁻ → Cl₂ preferred over O₂</div>
+      </div>
+    </div>
+
+    <div class="history-log" id="p1-history"></div>
+  </div>
+
+  <!-- Centre Column -->
+  <div class="centre-col">
+    <div class="centre-title">⚡ Electrolysis<br>Clash</div>
+
+    <div class="race-track">
+      <div class="track-lane">
+        <div class="racer-info">
+          <div class="racer-name p1-text" id="track-p1-name">P1</div>
+          <div class="racer-score p1-text" id="track-p1-score">0</div>
+        </div>
+        <div class="track-bar" id="p1-track-bar">
+          <div class="track-fill p1-fill" id="p1-fill" style="width:0%"></div>
+          <span class="racer-emoji" id="p1-racer" style="left:0%">🩷</span>
+        </div>
+      </div>
+      <div class="track-lane">
+        <div class="racer-info">
+          <div class="racer-name p2-text" id="track-p2-name">P2</div>
+          <div class="racer-score p2-text" id="track-p2-score">0</div>
+        </div>
+        <div class="track-bar" id="p2-track-bar">
+          <div class="track-fill p2-fill" id="p2-fill" style="width:0%"></div>
+          <span class="racer-emoji" id="p2-racer" style="left:0%">🩵</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="advantage-banner" id="advantage-banner">Ready to race! ⚡</div>
+
+    <div class="progress-area">
+      <div class="prog-label">PROGRESS</div>
+      <div class="prog-bars">
+        <div class="prog-track" id="p1-prog-track"></div>
+        <div style="width:4px"></div>
+        <div class="prog-track" id="p2-prog-track"></div>
+      </div>
+    </div>
+
+    <button class="show-results-btn" onclick="showResults()">🏁 Show Final Results</button>
+    <div class="school-credit">Evergreen Secondary School<br>© Ms Teng</div>
+  </div>
+
+  <!-- Player 2 Panel -->
+  <div class="player-panel p2-panel" id="p2-panel">
+    <div class="player-header">
+      <div class="player-avatar p2-avatar">🩵</div>
+      <div class="player-name" id="p2-display-name">Player 2</div>
+      <div class="score-badge p2-score-badge" id="p2-score-display">0</div>
+    </div>
+
+    <div class="q-card" id="p2-q-card">
+      <div class="q-meta">
+        <span class="q-num" id="p2-q-num">Q1 of 10</span>
+        <span class="diff-badge diff-easy" id="p2-diff-badge">Easy</span>
+        <span class="q-type-badge" id="p2-type-badge">MCQ</span>
+      </div>
+      <div class="q-progress" id="p2-q-progress"></div>
+      <div class="q-text" id="p2-q-text">Loading...</div>
+    </div>
+
+    <div class="answers-area" id="p2-answers"></div>
+    <div class="hint-box" id="p2-hint">💡 Tap an answer to begin!</div>
+
+    <div class="ref-panel">
+      <button class="ref-toggle" onclick="toggleRef('p2')">📋 Chemical Reference <span id="p2-ref-arrow">▼</span></button>
+      <div class="ref-content" id="p2-ref-content">
+        <div class="ref-section">⚙️ <span>Electrodes:</span> Cathode (−) · Anode (+)</div>
+        <div class="ref-section">🔋 <span>Metals (reactivity ↓):</span> Na, K, Ca, Mg, Al, Zn, Fe, Cu, Ag</div>
+        <div class="ref-section">💨 <span>Gases:</span> H₂ (cathode, dilute) · O₂ (anode, dilute/dilute SO₄²⁻) · Cl₂ (anode, conc Cl⁻)</div>
+        <div class="ref-section">🧪 <span>Ions:</span> H⁺ OH⁻ Cu²⁺ Zn²⁺ Na⁺ Cl⁻ SO₄²⁻ NO₃⁻</div>
+        <div class="ref-section">🔑 <span>Key:</span> Oxidation @ Anode · Reduction @ Cathode</div>
+        <div class="ref-section">📌 <span>Selective discharge:</span> Higher conc Cl⁻ → Cl₂ preferred over O₂</div>
+      </div>
+    </div>
+
+    <div class="history-log" id="p2-history"></div>
+  </div>
+</div>
+
+<!-- END SCREEN -->
+<div id="end-screen" class="screen">
+  <div class="trophy-section">
+    <span class="trophy-emoji">🏆</span>
+    <div class="winner-text" id="winner-text">Player 1 Wins!</div>
+  </div>
+  <div class="final-scores">
+    <div class="final-score-card p1-card">
+      <div class="final-score-name" id="end-p1-name">Player 1</div>
+      <div class="final-score-pts p1-text" id="end-p1-score">0</div>
+      <div style="font-size:0.75rem;color:var(--text-muted)">points</div>
+    </div>
+    <div class="final-score-card p2-card">
+      <div class="final-score-name" id="end-p2-name">Player 2</div>
+      <div class="final-score-pts p2-text" id="end-p2-score">0</div>
+      <div style="font-size:0.75rem;color:var(--text-muted)">points</div>
+    </div>
+  </div>
+  <button class="play-again-btn" onclick="resetGame()">🔄 Play Again</button>
+  <div class="lb-container">
+    <div class="lb-title">🏆 All-Time Leaderboard</div>
+    <div id="end-lb"></div>
+    <button class="clear-lb-btn" onclick="clearLeaderboard()">🗑️ Clear Leaderboard</button>
+  </div>
+</div>
+
+<!-- TEACHER PIN MODAL -->
+<div class="modal-overlay" id="pin-modal">
+  <div class="modal-card">
+    <div class="modal-title">🔒 Teacher Access</div>
+    <div class="modal-sub" id="pin-modal-sub">Enter PIN to delete this entry</div>
+    <input class="modal-input" id="pin-input" type="password" maxlength="6" placeholder="••••" inputmode="numeric">
+    <div class="modal-btn-row">
+      <button class="modal-cancel-btn" onclick="closePinModal()">Cancel</button>
+      <button class="modal-confirm-btn" onclick="confirmPinAction()">Delete</button>
+    </div>
+    <div class="modal-err" id="pin-err"></div>
+  </div>
+</div>
+
+<script>
+// ===== QUESTION BANK =====
+const QUESTIONS = {
+  easy: [
+    // MCQ
+    { id:'E1', type:'mcq', text:'What is the product at the cathode during the electrolysis of molten lead bromide (PbBr₂)?',
+      options:['A) Bromine','B) Lead','C) Lead bromide','D) Hydrogen'], answer:'B', diff:'easy',
+      hints:['Think about which type of ion goes to the cathode.','Positive ions are discharged at the cathode. Lead ions (Pb²⁺) are positive.','Pb²⁺ + 2e⁻ → Pb. The answer involves the metal.'] },
+    { id:'E2', type:'mcq', text:'What is the product at the anode during the electrolysis of molten lead bromide (PbBr₂)?',
+      options:['A) Lead','B) Lead bromide','C) Bromine','D) Oxygen'], answer:'C', diff:'easy',
+      hints:['The anode is positive. Which ions are attracted to it?','Bromide ions (Br⁻) are anions — they move to the anode.','2Br⁻ → Br₂ + 2e⁻. A reddish-brown gas is produced.'] },
+    { id:'E5', type:'mcq', text:'What is the product at the cathode during the electrolysis of molten sodium chloride (NaCl)?',
+      options:['A) Chlorine','B) Sodium','C) Hydrogen','D) Oxygen'], answer:'B', diff:'easy',
+      hints:['Molten NaCl only has Na⁺ and Cl⁻ ions. Which go to cathode?','Na⁺ is attracted to the negative electrode (cathode).','Na⁺ + e⁻ → Na. A silvery liquid metal is formed.'] },
+    { id:'E6', type:'mcq', text:'What is the product at the cathode during the electrolysis of dilute sulfuric acid (H₂SO₄)?',
+      options:['A) Oxygen','B) Sulfur','C) Hydrogen','D) Water'], answer:'C', diff:'easy',
+      hints:['In dilute H₂SO₄, H⁺ and OH⁻ ions are present from water.','H⁺ ions are positive cations that go to the cathode.','2H⁺ + 2e⁻ → H₂. A colourless gas is produced.'] },
+    { id:'E7', type:'mcq', text:'What is the product at the anode during the electrolysis of dilute sulfuric acid (H₂SO₄)?',
+      options:['A) Sulfur dioxide','B) Sulfate','C) Hydrogen','D) Oxygen'], answer:'D', diff:'easy',
+      hints:['At the anode, anions are discharged. SO₄²⁻ and OH⁻ are present.','OH⁻ ions are preferentially discharged at the anode in dilute solutions.','4OH⁻ → O₂ + 2H₂O + 4e⁻. A colourless gas is produced.'] },
+    { id:'E10', type:'mcq', text:'Which ion is discharged at the cathode during the electrolysis of dilute copper(II) sulfate solution (CuSO₄)?',
+      options:['A) Sulfate ion','B) Copper ion','C) Hydroxide ion','D) Hydrogen ion'], answer:'B', diff:'easy',
+      hints:['The cathode discharges cations. Which cations are in the solution?','Cu²⁺ and H⁺ are both present. Cu²⁺ is lower in the electrochemical series.','Ions lower in the electrochemical series are discharged preferentially. Cu²⁺ + 2e⁻ → Cu.'] },
+    { id:'E11', type:'mcq', text:'What gas is produced at the anode during the electrolysis of concentrated sodium chloride solution (NaCl)?',
+      options:['A) Oxygen','B) Hydrogen','C) Chlorine','D) Sodium'], answer:'C', diff:'easy',
+      hints:['In concentrated NaCl, Cl⁻ and OH⁻ are both present at the anode.','High concentration of Cl⁻ means it is preferentially discharged.','2Cl⁻ → Cl₂ + 2e⁻. A yellow-green gas with a sharp smell is produced.'] },
+    { id:'E13', type:'mcq', text:'What is the product at the cathode during the electrolysis of concentrated sodium chloride solution?',
+      options:['A) Sodium','B) Chlorine','C) Oxygen','D) Hydrogen'], answer:'D', diff:'easy',
+      hints:['In aqueous NaCl, both Na⁺ and H⁺ are present at the cathode.','Na is very reactive — H⁺ is discharged in preference to Na⁺.','2H⁺ + 2e⁻ → H₂. Hydrogen gas is produced at the cathode.'] },
+    { id:'E14', type:'mcq', text:'In a simple electric cell, which terminal is the negative electrode?',
+      options:['A) Less reactive metal','B) More reactive metal','C) The electrolyte','D) The wire'], answer:'B', diff:'easy',
+      hints:['Think about which metal is oxidised more readily.','The more reactive metal loses electrons — it is oxidised.','Oxidation occurs at the negative terminal (anode in the cell). More reactive = negative.'] },
+    { id:'E17', type:'mcq', text:'What fuel is used in a hydrogen-oxygen fuel cell?',
+      options:['A) Oxygen','B) Water','C) Hydrogen','D) Natural gas'], answer:'C', diff:'easy',
+      hints:['The name gives a clue — it is a hydrogen-oxygen fuel cell.','Hydrogen is the fuel that is oxidised at the negative electrode.','H₂ is supplied at the negative electrode and oxidised to produce electrons.'] },
+    { id:'E19', type:'mcq', text:'Which of the following is an electrolyte?',
+      options:['A) Solid sodium chloride','B) Sugar solution','C) Molten sodium chloride','D) Distilled water'], answer:'C', diff:'easy',
+      hints:['An electrolyte conducts electricity and is decomposed by it.','It must contain mobile ions.','Molten NaCl has free-moving Na⁺ and Cl⁻ ions — it can conduct electricity.'] },
+    // True/False
+    { id:'E3', type:'tf', text:'In a molten electrolyte, positive ions move toward the cathode (negative electrode).', answer:'True', diff:'easy',
+      hints:['Think about opposite charges attracting.','Cations are positive. The cathode is negative.','Opposite charges attract — cations move toward the negative cathode.'] },
+    { id:'E4', type:'tf', text:'Molten sodium chloride (NaCl) contains water molecules.', answer:'False', diff:'easy',
+      hints:['Molten means the solid has been melted by heat.','There is no water involved in melting a pure ionic solid.','Molten NaCl only contains Na⁺ and Cl⁻ ions — no water molecules are present.'] },
+    { id:'E8', type:'tf', text:'Hydrogen gas is produced at the cathode during the electrolysis of dilute sodium chloride solution.', answer:'True', diff:'easy',
+      hints:['In dilute NaCl solution, which cations are present?','Both Na⁺ and H⁺ (from water) are present at the cathode.','H⁺ is preferentially discharged over Na⁺. 2H⁺ + 2e⁻ → H₂. TRUE.'] },
+    { id:'E9', type:'tf', text:'Anions (negatively charged ions) move toward the anode during electrolysis.', answer:'True', diff:'easy',
+      hints:['The anode is the positive electrode.','Anions are negatively charged — opposite charges attract.','Anions are attracted to and discharged at the positive anode. TRUE.'] },
+    { id:'E12', type:'tf', text:'In concentrated sodium chloride solution, Cl⁻ is discharged in preference to OH⁻ at the anode.', answer:'True', diff:'easy',
+      hints:['At the anode, both Cl⁻ and OH⁻ compete for discharge.','Concentration plays a role in selective discharge.','High [Cl⁻] means Cl⁻ is preferentially discharged. TRUE.'] },
+    { id:'E15', type:'tf', text:'A fuel cell converts chemical energy directly into electrical energy.', answer:'True', diff:'easy',
+      hints:['Compare this to a combustion engine which burns fuel.','Fuel cells do not involve combustion.','Fuel cells electrochemically oxidise hydrogen, converting chemical energy directly to electrical energy. TRUE.'] },
+    { id:'E16', type:'tf', text:'Water is the only by-product of a hydrogen-oxygen fuel cell.', answer:'True', diff:'easy',
+      hints:['H₂ is oxidised and O₂ is reduced in the fuel cell.','H₂ + ½O₂ → H₂O. What is produced?','The only product is water (H₂O). TRUE.'] },
+    { id:'E18', type:'tf', text:'Electrolysis requires an external power source (e.g. battery or d.c. power supply).', answer:'True', diff:'easy',
+      hints:['Think about what drives the ions to move to the electrodes.','Unlike a battery that produces electricity, electrolysis consumes it.','Electrolysis requires an external d.c. power source to drive the non-spontaneous reaction. TRUE.'] },
+    { id:'E20', type:'tf', text:'Reduction occurs at the cathode during electrolysis.', answer:'True', diff:'easy',
+      hints:['Remember OIL RIG — Oxidation Is Loss, Reduction Is Gain.','At the cathode, ions gain electrons.','Cations gain electrons at the cathode → reduced. Cathode = Reduction. TRUE.'] },
+  ],
+  medium: [
+    { id:'M1', type:'mcq', text:'Why does solid lead bromide NOT conduct electricity, but molten lead bromide DOES?',
+      options:['A) Solid has no ions','B) Solid ions cannot move freely','C) Solid is not ionic','D) Melting adds new ions'], answer:'B', diff:'medium',
+      hints:['Both solid and molten PbBr₂ contain ions.','Think about what happens to the ion positions when it melts.','In solid PbBr₂, ions are held in fixed lattice positions. Melting frees them to move.'] },
+    { id:'M2', type:'mcq', text:'What would you observe at the anode during the electrolysis of molten zinc chloride (ZnCl₂)?',
+      options:['A) A silvery solid forms','B) A yellow-green gas is produced','C) A blue solution forms','D) No visible change'], answer:'B', diff:'medium',
+      hints:['Cl⁻ ions are attracted to the anode and discharged.','What does chlorine gas look like?','2Cl⁻ → Cl₂ + 2e⁻. Chlorine is a yellow-green gas with a pungent smell.'] },
+    { id:'M4', type:'mcq', text:'What happens to the blue colour of dilute CuSO₄ solution during electrolysis using inert electrodes?',
+      options:['A) Intensifies','B) Stays the same','C) Fades','D) Turns green'], answer:'C', diff:'medium',
+      hints:['The blue colour in CuSO₄ is due to Cu²⁺ ions.','At the cathode, Cu²⁺ ions are being removed from solution.','As Cu²⁺ is deposited at the cathode, [Cu²⁺] decreases → blue colour fades.'] },
+    { id:'M5', type:'mcq', text:'In the electrolysis of dilute sulfuric acid, what is the ratio of volume of gas at cathode : anode?',
+      options:['A) Equal','B) 1:2','C) 2:1','D) 4:1'], answer:'C', diff:'medium',
+      hints:['Cathode produces H₂, anode produces O₂.','Compare the half-equations: 2H⁺ + 2e⁻ → H₂ and 4OH⁻ → O₂ + 2H₂O + 4e⁻.','For every 4 electrons transferred, 2 mol H₂ at cathode and 1 mol O₂ at anode. Ratio = 2:1.'] },
+    { id:'M7', type:'mcq', text:'Which ion is preferentially discharged at the anode during electrolysis of dilute sodium chloride solution?',
+      options:['A) Cl⁻','B) Na⁺','C) OH⁻','D) H⁺'], answer:'C', diff:'medium',
+      hints:['In dilute NaCl, Cl⁻ and OH⁻ both go to the anode.','In dilute solutions, concentration matters.','At low [Cl⁻], OH⁻ is preferentially discharged. 4OH⁻ → O₂ + 2H₂O + 4e⁻.'] },
+    { id:'M9', type:'mcq', text:'What happens to the concentration of Cu²⁺ ions in dilute CuSO₄ solution during electrolysis with inert electrodes?',
+      options:['A) Increases','B) Stays constant','C) Decreases','D) Becomes zero instantly'], answer:'C', diff:'medium',
+      hints:['Inert electrodes do not dissolve.','Cu²⁺ ions are deposited at the cathode but not replenished.','Cu²⁺ is consumed at cathode; no Cu is added from the anode → [Cu²⁺] decreases.'] },
+    { id:'M10', type:'mcq', text:'Why is chlorine gas produced at the anode in concentrated NaCl solution, but oxygen is produced in dilute NaCl solution?',
+      options:['A) Temperature difference','B) High Cl⁻ concentration favours its discharge over OH⁻','C) Dilute solution has no Cl⁻','D) Chlorine is always produced'], answer:'B', diff:'medium',
+      hints:['Both Cl⁻ and OH⁻ are present in both solutions.','Concentration is the deciding factor at the anode.','In concentrated NaCl, [Cl⁻] is high → Cl⁻ discharged preferentially. In dilute, [Cl⁻] is low → OH⁻ discharged instead.'] },
+    { id:'M12', type:'mcq', text:'What are the THREE products of the electrolysis of concentrated sodium chloride solution?',
+      options:['A) Na, Cl₂, H₂O','B) H₂, Cl₂, NaOH','C) H₂, O₂, NaCl','D) Na, O₂, HCl'], answer:'B', diff:'medium',
+      hints:['Cathode produces H₂; anode produces Cl₂.','What remains in solution after H⁺ and Cl⁻ are removed?','Na⁺ and OH⁻ remain → NaOH solution. Three products: H₂, Cl₂, NaOH.'] },
+    { id:'M13', type:'mcq', text:'What happens to the mass of the copper ANODE during electrolysis of dilute CuSO₄ with copper electrodes?',
+      options:['A) Increases','B) Stays constant','C) Decreases','D) First increases then decreases'], answer:'C', diff:'medium',
+      hints:['The copper anode is a reactive electrode.','A reactive anode dissolves during electrolysis.','Cu → Cu²⁺ + 2e⁻ at the anode. The anode loses mass as it dissolves.'] },
+    { id:'M14', type:'mcq', text:'What happens to the concentration of Cu²⁺ ions when COPPER electrodes are used in CuSO₄ electrolysis?',
+      options:['A) Increases','B) Decreases','C) Stays constant','D) Drops to zero'], answer:'C', diff:'medium',
+      hints:['The copper anode dissolves and releases Cu²⁺.','The cathode deposits Cu²⁺ as copper metal.','Rate of Cu²⁺ consumed at cathode = rate of Cu²⁺ released from anode → [Cu²⁺] stays constant.'] },
+    { id:'M16', type:'mcq', text:'In silver electroplating, which electrode is the object being coated?',
+      options:['A) Anode','B) Cathode','C) Either electrode','D) Neither — it is placed in solution'], answer:'B', diff:'medium',
+      hints:['In electroplating, the object gains a metal coating.','The metal is deposited (reduced) onto the object.','Ag⁺ + e⁻ → Ag occurs at the cathode. The object to be coated is the cathode.'] },
+    { id:'M17', type:'mcq', text:'In a zinc-copper electric cell, which metal dissolves (acts as the negative terminal)?',
+      options:['A) Copper','B) Zinc','C) Both dissolve','D) Neither dissolves'], answer:'B', diff:'medium',
+      hints:['The more reactive metal is oxidised and dissolves.','Compare zinc and copper in the reactivity series.','Zinc is more reactive than copper → Zn is oxidised → Zn²⁺ + 2e⁻. Zinc dissolves.'] },
+    { id:'M19', type:'mcq', text:'Why are hydrogen-oxygen fuel cells more efficient than combustion engines?',
+      options:['A) They produce more heat','B) They use cheaper fuel','C) They convert chemical energy directly to electrical energy without combustion','D) They have more moving parts'], answer:'C', diff:'medium',
+      hints:['Think about how energy is converted in each device.','Combustion engines waste energy as heat.','Fuel cells bypass heat production, converting chemical energy directly to electrical energy → less energy wasted.'] },
+    // True/False
+    { id:'M3', type:'tf', text:'Electrolysis of molten aluminium oxide (Al₂O₃) produces aluminium at the ANODE.', answer:'False', diff:'medium',
+      hints:['Al³⁺ is a cation. Which electrode do cations go to?','Cations are reduced at the cathode, not the anode.','Al³⁺ + 3e⁻ → Al occurs at the CATHODE. The statement is FALSE.'] },
+    { id:'M6', type:'tf', text:'Chlorine gas is produced at the anode during the electrolysis of dilute hydrochloric acid (HCl).', answer:'False', diff:'medium',
+      hints:['In dilute HCl, what are the anions present?','Both Cl⁻ and OH⁻ are present. Which is preferentially discharged in dilute solution?','In dilute HCl, [Cl⁻] is low → OH⁻ is preferentially discharged → O₂ is produced, not Cl₂. FALSE.'] },
+    { id:'M8', type:'tf', text:'Ions higher in the electrochemical series are always discharged first at the electrode.', answer:'False', diff:'medium',
+      hints:['Think about the selective discharge rule.','Lower in electrochemical series = easier to discharge.','Ions LOWER in the electrochemical series are preferentially discharged. The statement is FALSE.'] },
+    { id:'M11', type:'tf', text:'During the electrolysis of concentrated NaCl solution, the solution gradually becomes sodium hydroxide (NaOH).', answer:'True', diff:'medium',
+      hints:['H⁺ is removed at cathode, Cl⁻ is removed at anode.','What ions remain in solution?','Na⁺ and OH⁻ accumulate in solution → NaOH is formed. TRUE.'] },
+    { id:'M15', type:'tf', text:'The blue colour of the CuSO₄ solution remains unchanged when a copper anode is used in electrolysis.', answer:'True', diff:'medium',
+      hints:['Think about what happens at both electrodes with copper electrodes.','Cu deposits at cathode; Cu dissolves from anode.','The rate of Cu²⁺ removal = rate of Cu²⁺ addition → [Cu²⁺] constant → colour unchanged. TRUE.'] },
+    { id:'M18', type:'tf', text:'In a hydrogen-oxygen fuel cell, hydrogen is OXIDISED at the negative electrode.', answer:'True', diff:'medium',
+      hints:['Which electrode is the negative electrode in a fuel cell?','Hydrogen is supplied at the negative electrode (anode of the fuel cell).','H₂ → 2H⁺ + 2e⁻ (or H₂ + 2OH⁻ → 2H₂O + 2e⁻). Oxidation occurs. TRUE.'] },
+    { id:'M20', type:'tf', text:'Two identical metals connected in an electric cell will produce a measurable voltage.', answer:'False', diff:'medium',
+      hints:['Voltage in an electric cell comes from the difference in reactivity.','If both metals are the same, what is the potential difference?','No difference in reactivity → no potential difference → no voltage. FALSE.'] },
+  ],
+  hard: [
+    { id:'H1', type:'mcq', text:'Why is cryolite (Na₃AlF₆) used in the industrial extraction of aluminium (Hall-Héroult process)?',
+      options:['A) It purifies the aluminium','B) To lower the melting point of Al₂O₃','C) It increases electrical conductivity','D) It prevents oxidation'], answer:'B', diff:'hard',
+      hints:['Al₂O₃ has a very high melting point (over 2000°C).','Cryolite is mixed with Al₂O₃ to change its physical properties.','Cryolite lowers the melting point of Al₂O₃ to about 1000°C, reducing energy costs significantly.'] },
+    { id:'H2', type:'mcq', text:'Which is the correct cathode half-equation for the electrolysis of dilute sodium chloride solution?',
+      options:['A) 2Cl⁻ → Cl₂ + 2e⁻','B) 2H⁺ + 2e⁻ → H₂','C) Na⁺ + e⁻ → Na','D) 4OH⁻ → O₂ + 2H₂O + 4e⁻'], answer:'B', diff:'hard',
+      hints:['Identify what is produced at the cathode in dilute NaCl.','H⁺ ions from water are preferentially discharged at the cathode.','H⁺ gains electrons (is reduced): 2H⁺ + 2e⁻ → H₂. This is the correct half-equation.'] },
+    { id:'H4', type:'mcq', text:'Which is the correct anode half-equation for the electrolysis of dilute sulfuric acid?',
+      options:['A) 2SO₄²⁻ → S₂O₈²⁻ + 2e⁻','B) 2H₂O → O₂ + 4H⁺ + 4e⁻','C) 4OH⁻ → O₂ + 2H₂O + 4e⁻','D) H₂O → H₂ + ½O₂'], answer:'C', diff:'hard',
+      hints:['OH⁻ ions from water are preferentially discharged at the anode.','Hydroxide ions are oxidised at the anode.','4OH⁻ → O₂ + 2H₂O + 4e⁻. OH⁻ loses electrons (is oxidised) at the anode.'] },
+    { id:'H5', type:'mcq', text:'What are the observations at BOTH electrodes during the electrolysis of dilute CuSO₄ with inert platinum electrodes?',
+      options:['A) Cathode: pink solid deposits; Anode: colourless gas produced','B) Cathode: colourless gas; Anode: pink solid','C) Both electrodes: colourless gas','D) Cathode: blue solid; Anode: yellow-green gas'], answer:'A', diff:'hard',
+      hints:['At the cathode, Cu²⁺ is reduced.','At the anode, OH⁻ is oxidised in dilute solution.','Cathode: Cu²⁺ + 2e⁻ → Cu (pink solid). Anode: 4OH⁻ → O₂ + 2H₂O + 4e⁻ (gas).'] },
+    { id:'H6', type:'mcq', text:'What would happen to universal indicator placed near the CATHODE after prolonged electrolysis of dilute NaCl?',
+      options:['A) Turns red — acidic','B) Turns purple/blue — alkaline','C) No colour change','D) Turns yellow — neutral'], answer:'B', diff:'hard',
+      hints:['H⁺ is removed at the cathode, and OH⁻ builds up.','Removing H⁺ increases the relative concentration of OH⁻.','Near the cathode, excess OH⁻ accumulates → alkaline environment → indicator turns purple/blue.'] },
+    { id:'H8', type:'mcq', text:'Why does the anode product change from Cl₂ to O₂ over time during prolonged electrolysis of concentrated NaCl?',
+      options:['A) Cl⁻ concentration decreases, OH⁻ is discharged instead','B) Temperature increases over time','C) The anode becomes reactive','D) Na⁺ blocks the Cl⁻'], answer:'A', diff:'hard',
+      hints:['As electrolysis continues, Cl⁻ is being consumed.','What happens to [Cl⁻] over time?','As [Cl⁻] drops, OH⁻ becomes the preferentially discharged anion → O₂ replaces Cl₂.'] },
+    { id:'H9', type:'mcq', text:'What is the overall observation after prolonged electrolysis of dilute CuSO₄ with copper electrodes?',
+      options:['A) Both electrodes gain mass','B) Anode dissolves; cathode grows; solution colour unchanged','C) Both electrodes dissolve','D) Anode gains mass; cathode dissolves'], answer:'B', diff:'hard',
+      hints:['Think about what happens at each copper electrode separately.','At cathode: Cu deposits. At anode: Cu dissolves.','Anode mass decreases (Cu → Cu²⁺); cathode mass increases (Cu²⁺ → Cu); [Cu²⁺] stays constant → colour unchanged.'] },
+    { id:'H11', type:'mcq', text:'During electroplating of a steel spoon with silver, which statement is correct?',
+      options:['A) The silver anode gains mass','B) The steel spoon loses mass','C) The steel spoon gains mass as silver deposits onto it','D) Both spoon and silver anode lose mass'], answer:'C', diff:'hard',
+      hints:['The steel spoon is the object to be coated — it is the cathode.','At the cathode, silver ions are reduced.','Ag⁺ + e⁻ → Ag deposits onto the steel spoon (cathode) → spoon gains mass.'] },
+    { id:'H13', type:'mcq', text:'In a zinc-copper electric cell, which direction do electrons flow through the external wire?',
+      options:['A) From copper to zinc','B) From zinc to copper through the wire','C) Electrons do not flow through wire','D) Alternating direction'], answer:'B', diff:'hard',
+      hints:['Zinc is oxidised and loses electrons.','Electrons are released at zinc and flow through the wire.','Zn → Zn²⁺ + 2e⁻. Electrons flow from Zn (negative terminal) through wire to Cu (positive terminal).'] },
+    { id:'H14', type:'mcq', text:'Which metal pair would produce the GREATEST voltage in a simple electric cell?',
+      options:['A) Iron and copper','B) Magnesium and copper','C) Zinc and copper','D) Zinc and iron'], answer:'B', diff:'hard',
+      hints:['Voltage depends on the difference in reactivity between the two metals.','Greater difference in reactivity = greater voltage.','Mg is far more reactive than Cu → greatest potential difference → greatest voltage.'] },
+    { id:'H16', type:'mcq', text:'Why does the voltage of a simple electric cell decrease over time?',
+      options:['A) Electrolyte evaporates','B) Reactive metal used up and H₂ bubbles coat the electrodes','C) Copper becomes more reactive','D) The wire overheats'], answer:'B', diff:'hard',
+      hints:['Think about what happens to the zinc electrode over time.','H₂ bubbles form on the copper electrode — what effect does this have?','Zinc is consumed → less potential difference. H₂ coats copper (polarisation) → reduces efficiency.'] },
+    { id:'H17', type:'mcq', text:'Which is the correct half-equation at the NEGATIVE electrode in an alkaline hydrogen-oxygen fuel cell?',
+      options:['A) O₂ + 2H₂O + 4e⁻ → 4OH⁻','B) H₂ + 2OH⁻ → 2H₂O + 2e⁻','C) 2H⁺ + 2e⁻ → H₂','D) H₂ → 2H⁺ + 2e⁻'], answer:'B', diff:'hard',
+      hints:['In an alkaline fuel cell, OH⁻ is the electrolyte ion.','H₂ is oxidised at the negative electrode.','H₂ reacts with OH⁻: H₂ + 2OH⁻ → 2H₂O + 2e⁻. Oxidation (loss of electrons) occurs.'] },
+    { id:'H19', type:'mcq', text:'Compared to a combustion engine, a hydrogen fuel cell vehicle produces:',
+      options:['A) Carbon dioxide and nitrogen oxides','B) Only water as exhaust','C) Only heat','D) No by-products at all'], answer:'B', diff:'hard',
+      hints:['H₂ + O₂ → H₂O in a fuel cell.','There is no carbon in hydrogen, so no CO₂ is produced.','The only exhaust from a H₂ fuel cell is water (H₂O). No carbon emissions.'] },
+    { id:'H20', type:'mcq', text:'What is a major limitation of hydrogen fuel cells for widespread use?',
+      options:['A) They produce too much electricity','B) Hydrogen is difficult to store and transport safely','C) They require gold electrodes','D) They only work at very high temperatures'], answer:'B', diff:'hard',
+      hints:['Think about the physical properties of hydrogen gas.','H₂ is highly flammable and has a very low density.','Hydrogen must be stored under high pressure or as a cryogenic liquid — difficult, costly, and potentially dangerous.'] },
+    // True/False
+    { id:'H3', type:'tf', text:'The concentration of sulfuric acid (H₂SO₄) INCREASES during the electrolysis of dilute H₂SO₄ with inert electrodes.', answer:'True', diff:'hard',
+      hints:['What is consumed and what is produced during this electrolysis?','H₂ and O₂ are produced — what does that use up?','Water (H₂O) is broken down. As H₂O is consumed, the relative amount of H₂SO₄ increases → concentration increases. TRUE.'] },
+    { id:'H7', type:'tf', text:'During electrolysis of concentrated hydrochloric acid (HCl), Cl₂ is produced at the anode and H₂ at the cathode.', answer:'True', diff:'hard',
+      hints:['In concentrated HCl, what ions are present?','High [Cl⁻] → Cl⁻ is preferentially discharged at anode. H⁺ at cathode.','Anode: 2Cl⁻ → Cl₂ + 2e⁻. Cathode: 2H⁺ + 2e⁻ → H₂. Both correct. TRUE.'] },
+    { id:'H10', type:'tf', text:'If a reactive iron anode is used in CuSO₄ solution, iron dissolves and copper deposits at the cathode.', answer:'True', diff:'hard',
+      hints:['A reactive anode is oxidised (dissolves) during electrolysis.','What gets deposited at the cathode?','Fe → Fe²⁺ + 2e⁻ at anode (iron dissolves). Cu²⁺ + 2e⁻ → Cu at cathode. TRUE.'] },
+    { id:'H12', type:'tf', text:'When a more reactive metal is used as the anode in an electrolyte containing its own ions, the concentration of metal ions in solution stays constant.', answer:'True', diff:'hard',
+      hints:['The reactive anode dissolves, releasing metal ions.','The cathode deposits metal ions.','Rate of ion release (anode) = rate of ion deposition (cathode) → [metal ion] constant. TRUE.'] },
+    { id:'H15', type:'tf', text:'In a simple electric cell, the more reactive metal undergoes oxidation and acts as the negative terminal.', answer:'True', diff:'hard',
+      hints:['The more reactive metal is more easily oxidised.','Oxidation involves loss of electrons — where do those electrons go?','More reactive metal → oxidised (loses e⁻) → negative terminal. e⁻ flow to positive terminal. TRUE.'] },
+    { id:'H18', type:'tf', text:'In a hydrogen-oxygen fuel cell, oxygen is REDUCED at the positive electrode.', answer:'True', diff:'hard',
+      hints:['The positive electrode is the cathode of the fuel cell.','Oxygen is supplied at the positive electrode.','O₂ + 2H₂O + 4e⁻ → 4OH⁻. Oxygen gains electrons → reduced at positive electrode. TRUE.'] },
+  ]
+};
+
+// ===== PROFANITY FILTER (simple blocklist with leet detection) =====
+const PROFANITY = ['fuck','shit','bitch','ass','crap','damn','hell','piss','dick','cock','pussy','bastard','slut','whore','fag','idiot','stupid','dumb','moron','retard','freak','loser'];
+function hasProfanity(str) {
+  const norm = str.toLowerCase().replace(/0/g,'o').replace(/1/g,'i').replace(/3/g,'e').replace(/4/g,'a').replace(/5/g,'s').replace(/\$/g,'s').replace(/@/g,'a');
+  return PROFANITY.some(w => norm.includes(w));
+}
+
+// ===== GAME STATE =====
+let gameState = {
+  p1: { name:'', score:0, qIdx:0, questions:[], attempts:0, history:[], profanityStrikes:0, done:false },
+  p2: { name:'', score:0, qIdx:0, questions:[], attempts:0, history:[], profanityStrikes:0, done:false },
+  difficulty: 'mixed',
+  qCount: 10,
+  gameClass: ''
+};
+
+// ===== SETUP OPTION BUTTONS =====
+document.querySelectorAll('#diff-options .option-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#diff-options .option-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+  });
+});
+document.querySelectorAll('#qcount-options .option-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#qcount-options .option-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+  });
+});
+
+// ===== SHUFFLE =====
+function shuffle(arr) {
+  const a = [...arr]; for (let i=a.length-1;i>0;i--) { const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]; } return a;
+}
+
+// ===== BUILD QUESTION SET =====
+function buildQuestions(diff, count, exclude=[]) {
+  let pool = [];
+  if (diff === 'mixed') {
+    const easy = shuffle(QUESTIONS.easy).slice(0, Math.ceil(count/3));
+    const medium = shuffle(QUESTIONS.medium).slice(0, Math.ceil(count/3));
+    const hard = shuffle(QUESTIONS.hard).slice(0, count - easy.length - medium.length + 1);
+    pool = shuffle([...easy, ...medium, ...hard]);
+  } else {
+    pool = shuffle(QUESTIONS[diff]);
+  }
+  const used = new Set(exclude);
+  const result = pool.filter(q => !used.has(q.id)).slice(0, count);
+  return result;
+}
+
+// ===== START GAME =====
+function startGame() {
+  const p1n = document.getElementById('p1-name').value.trim() || 'Player 1';
+  const p2n = document.getElementById('p2-name').value.trim() || 'Player 2';
+  const diff = document.querySelector('#diff-options .option-btn.selected').dataset.val;
+  const count = parseInt(document.querySelector('#qcount-options .option-btn.selected').dataset.val);
+  const p1cls = document.getElementById('p1-class').value.trim();
+  const p2cls = document.getElementById('p2-class').value.trim();
+
+  gameState.difficulty = diff;
+  gameState.qCount = count;
+  gameState.p1class = p1cls;
+  gameState.p2class = p2cls;
+
+  const p1Qs = buildQuestions(diff, count);
+  const p1Ids = p1Qs.map(q=>q.id);
+  const p2Qs = buildQuestions(diff, count, p1Ids);
+
+  gameState.p1 = { name: p1n, score:0, qIdx:0, questions: p1Qs, attempts:0, history:[], profanityStrikes:0, done:false };
+  gameState.p2 = { name: p2n, score:0, qIdx:0, questions: p2Qs, attempts:0, history:[], profanityStrikes:0, done:false };
+
+  document.getElementById('p1-display-name').textContent = p1n;
+  document.getElementById('p2-display-name').textContent = p2n;
+  document.getElementById('track-p1-name').textContent = p1n.slice(0,8);
+  document.getElementById('track-p2-name').textContent = p2n.slice(0,8);
+
+  initProgressDots('p1');
+  initProgressDots('p2');
+
+  showScreen('game-screen');
+  renderQuestion('p1');
+  renderQuestion('p2');
+  updateRaceTrack();
+}
+
+// ===== PROGRESS DOTS =====
+function initProgressDots(player) {
+  const gs = gameState[player];
+  const container = document.getElementById(`${player}-q-progress`);
+  container.innerHTML = '';
+  gs.questions.forEach((_, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'q-dot' + (i===0?' current':'');
+    dot.id = `${player}-dot-${i}`;
+    container.appendChild(dot);
+  });
+  const track = document.getElementById(`${player}-prog-track`);
+  track.innerHTML = '';
+  gs.questions.forEach((_, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'prog-dot';
+    dot.id = `${player}-prog-${i}`;
+    track.appendChild(dot);
+  });
+}
+
+function updateProgressDot(player, idx, status) {
+  const dot = document.getElementById(`${player}-dot-${idx}`);
+  const prog = document.getElementById(`${player}-prog-${idx}`);
+  if (dot) { dot.classList.remove('current','correct','wrong','skipped'); dot.classList.add(status); }
+  if (prog) {
+    prog.classList.remove('answered','p2-answered');
+    prog.classList.add(player==='p1'?'answered':'p2-answered');
+  }
+  const next = document.getElementById(`${player}-dot-${idx+1}`);
+  if (next) next.classList.add('current');
+}
+
+// ===== RENDER QUESTION =====
+function renderQuestion(player) {
+  const gs = gameState[player];
+  if (gs.qIdx >= gs.questions.length) {
+    // Done
+    gs.done = true;
+    document.getElementById(`${player}-q-card`).innerHTML = '';
+    document.getElementById(`${player}-answers`).innerHTML = '';
+    document.getElementById(`${player}-hint`).textContent = '🎉 All questions complete!';
+    return;
+  }
+  const q = gs.questions[gs.qIdx];
+  gs.attempts = 0;
+
+  const numEl = document.getElementById(`${player}-q-num`);
+  const diffBadge = document.getElementById(`${player}-diff-badge`);
+  const typeBadge = document.getElementById(`${player}-type-badge`);
+  const textEl = document.getElementById(`${player}-q-text`);
+  const hintEl = document.getElementById(`${player}-hint`);
+
+  if (numEl) numEl.textContent = `Q${gs.qIdx+1} of ${gs.questions.length}`;
+  if (diffBadge) {
+    diffBadge.textContent = q.diff.charAt(0).toUpperCase()+q.diff.slice(1);
+    diffBadge.className = 'diff-badge diff-'+q.diff;
+  }
+  if (typeBadge) typeBadge.textContent = q.type.toUpperCase();
+  if (textEl) textEl.textContent = q.text;
+  if (hintEl) { hintEl.textContent = '💡 Select your answer!'; hintEl.className = 'hint-box'; }
+
+  renderAnswers(player, q);
+}
+
+function renderAnswers(player, q) {
+  const container = document.getElementById(`${player}-answers`);
+  container.innerHTML = '';
+  if (q.type === 'mcq') {
+    const letters = ['A','B','C','D'];
+    q.options.forEach((opt, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'ans-btn';
+      btn.innerHTML = `<span class="ans-letter">${letters[i]}</span><span>${opt.slice(3)}</span>`;
+      btn.addEventListener('click', () => handleAnswer(player, letters[i], btn, container));
+      container.appendChild(btn);
+    });
+  } else {
+    const row = document.createElement('div');
+    row.className = 'tf-row';
+    ['True','False'].forEach(val => {
+      const btn = document.createElement('button');
+      btn.className = 'tf-btn';
+      btn.textContent = val === 'True' ? '✅ True' : '❌ False';
+      btn.addEventListener('click', () => handleAnswer(player, val, btn, row));
+      row.appendChild(btn);
+    });
+    container.appendChild(row);
+  }
+}
+
+// ===== HANDLE ANSWER =====
+function handleAnswer(player, chosen, btn, container) {
+  const gs = gameState[player];
+  if (gs.done || gs.qIdx >= gs.questions.length) return;
+  const q = gs.questions[gs.qIdx];
+
+  const isCorrect = chosen === q.answer;
+  gs.attempts++;
+
+  const hintEl = document.getElementById(`${player}-hint`);
+  const allBtns = container.querySelectorAll('.ans-btn, .tf-btn');
+
+  if (isCorrect) {
+    // Score
+    let pts = 0;
+    if (gs.attempts === 1) pts = 3;
+    else if (gs.attempts === 2) pts = 2;
+    else pts = 1;
+    gs.score += pts;
+
+    btn.classList.add('selected-correct');
+    allBtns.forEach(b => b.disabled = true);
+    hintEl.className = 'hint-box correct-fb';
+    hintEl.textContent = `✅ Correct! +${pts} point${pts!==1?'s':''}`;
+
+    // Animate score
+    const scoreBadge = document.getElementById(`${player}-score-display`);
+    if (scoreBadge) { scoreBadge.textContent = gs.score; scoreBadge.classList.remove('score-pop'); void scoreBadge.offsetWidth; scoreBadge.classList.add('score-pop'); }
+
+    updateProgressDot(player, gs.qIdx, 'correct');
+    addHistory(player, q, 'correct', chosen, pts);
+
+    setTimeout(() => {
+      gs.qIdx++;
+      renderQuestion(player);
+      updateRaceTrack();
+    }, 1200);
+
+  } else {
+    btn.classList.add('selected-wrong');
+    btn.disabled = true;
+
+    if (gs.attempts >= 3) {
+      // Skip
+      allBtns.forEach(b => b.disabled = true);
+      // Reveal correct
+      allBtns.forEach(b => {
+        const letter = b.querySelector('.ans-letter')?.textContent || b.textContent.replace(/✅|❌/,'').trim().replace(' ','');
+        const val = b.classList.contains('tf-btn') ? (b.textContent.includes('True')?'True':'False') : b.querySelector('.ans-letter')?.textContent;
+        if (val === q.answer) b.classList.add('reveal-correct');
+      });
+      hintEl.className = 'hint-box skip-fb';
+      hintEl.textContent = `⏭️ Skipped. Correct answer: ${q.answer}`;
+      updateProgressDot(player, gs.qIdx, 'skipped');
+      addHistory(player, q, 'skipped', chosen, 0);
+      setTimeout(() => { gs.qIdx++; renderQuestion(player); updateRaceTrack(); }, 1800);
+    } else {
+      hintEl.className = 'hint-box wrong-fb';
+      const hint = q.hints[gs.attempts-1] || 'Try again!';
+      hintEl.textContent = `❌ Not quite. Hint ${gs.attempts}/3: ${hint}`;
+    }
+  }
+}
+
+// ===== HISTORY LOG =====
+function addHistory(player, q, status, chosen, pts) {
+  const gs = gameState[player];
+  const log = document.getElementById(`${player}-history`);
+  const item = document.createElement('div');
+  const cls = status==='correct'?'hist-correct':status==='skipped'?'hist-skip':'hist-wrong';
+  item.className = `hist-item ${cls}`;
+  const icon = status==='correct'?'✅':status==='skipped'?'⏭️':'❌';
+  item.innerHTML = `<div class="hist-q">${icon} Q${gs.qIdx+1}: ${q.text.slice(0,60)}${q.text.length>60?'…':''}</div>
+    <div class="hist-a">Your answer: ${chosen} · ${status==='correct'?`+${pts}pts`:`0pts`}</div>`;
+  log.insertBefore(item, log.firstChild);
+}
+
+// ===== RACE TRACK =====
+function updateRaceTrack() {
+  const max = Math.max(gameState.p1.score, gameState.p2.score, 1);
+  const maxPts = gameState.qCount * 3;
+  const p1pct = Math.min((gameState.p1.score / maxPts) * 88, 88);
+  const p2pct = Math.min((gameState.p2.score / maxPts) * 88, 88);
+
+  document.getElementById('p1-fill').style.width = p1pct + '%';
+  document.getElementById('p2-fill').style.width = p2pct + '%';
+  document.getElementById('p1-racer').style.left = p1pct + '%';
+  document.getElementById('p2-racer').style.left = p2pct + '%';
+  document.getElementById('track-p1-score').textContent = gameState.p1.score;
+  document.getElementById('track-p2-score').textContent = gameState.p2.score;
+  document.getElementById('p1-score-display').textContent = gameState.p1.score;
+  document.getElementById('p2-score-display').textContent = gameState.p2.score;
+
+  const banner = document.getElementById('advantage-banner');
+  const d = gameState.p1.score - gameState.p2.score;
+  if (d > 3) banner.textContent = `${gameState.p1.name} is leading! 🔥`;
+  else if (d < -3) banner.textContent = `${gameState.p2.name} is leading! 🔥`;
+  else if (d === 0 && gameState.p1.score > 0) banner.textContent = `🤝 It\'s a tie!`;
+  else if (d > 0) banner.textContent = `${gameState.p1.name} edges ahead!`;
+  else if (d < 0) banner.textContent = `${gameState.p2.name} edges ahead!`;
+  else banner.textContent = 'Ready to race! ⚡';
+}
+
+// ===== TOGGLE REF PANEL =====
+function toggleRef(player) {
+  const content = document.getElementById(`${player}-ref-content`);
+  const arrow = document.getElementById(`${player}-ref-arrow`);
+  content.classList.toggle('open');
+  arrow.textContent = content.classList.contains('open') ? '▲' : '▼';
+}
+
+// ===== SHOW RESULTS (teacher-triggered) =====
+function showResults() {
+  const p1s = gameState.p1.score;
+  const p2s = gameState.p2.score;
+  let winner = '';
+  if (p1s > p2s) winner = `🏆 ${gameState.p1.name} Wins!`;
+  else if (p2s > p1s) winner = `🏆 ${gameState.p2.name} Wins!`;
+  else winner = '🤝 It\'s a Draw!';
+
+  document.getElementById('winner-text').textContent = winner;
+  document.getElementById('end-p1-name').textContent = gameState.p1.name;
+  document.getElementById('end-p2-name').textContent = gameState.p2.name;
+  document.getElementById('end-p1-score').textContent = p1s;
+  document.getElementById('end-p2-score').textContent = p2s;
+
+  // Save to leaderboard
+  const newEntries = [];
+  [['p1',p1s],['p2',p2s]].forEach(([p, sc]) => {
+    const gs = gameState[p];
+    const cls = p === 'p1' ? gameState.p1class : gameState.p2class;
+    if (gs.qIdx > 0) {
+      newEntries.push(saveLeaderboard(gs.name, cls, sc, gameState.difficulty, gs.qIdx));
+    }
+  });
+
+  showScreen('end-screen');
+  renderLeaderboard('end-lb', newEntries);
+  launchConfetti();
+}
+
+// ===== LEADERBOARD =====
+const TEACHER_PIN = '6092'; // change this PIN as needed
+
+// Daily auto-clear: wipe if stored date differs from today
+function todayStr() {
+  return new Date().toLocaleDateString('en-SG');
+}
+function autoCheckDailyReset() {
+  try {
+    const stored = localStorage.getItem('elec_clash_lb_date');
+    const today = todayStr();
+    if (stored && stored !== today) {
+      localStorage.removeItem('elec_clash_lb');
+      localStorage.setItem('elec_clash_lb_date', today);
+    } else if (!stored) {
+      localStorage.setItem('elec_clash_lb_date', today);
+    }
+  } catch(e) {}
+}
+
+function loadLeaderboard() {
+  autoCheckDailyReset();
+  try { return JSON.parse(localStorage.getItem('elec_clash_lb') || '[]'); } catch { return []; }
+}
+function persistLeaderboard(lb) {
+  localStorage.setItem('elec_clash_lb', JSON.stringify(lb));
+  localStorage.setItem('elec_clash_lb_date', todayStr());
+}
+function saveLeaderboard(name, cls, score, diff, qPlayed) {
+  const lb = loadLeaderboard();
+  const entry = { name, cls, score, diff, qPlayed, date: todayStr() };
+  lb.push(entry);
+  lb.sort((a,b) => b.score-a.score || a.qPlayed-b.qPlayed);
+  const top10 = lb.slice(0, 10);
+  persistLeaderboard(top10);
+  return entry;
+}
+function clearLeaderboard() {
+  if (confirm('Clear the entire leaderboard? This cannot be undone.')) {
+    localStorage.removeItem('elec_clash_lb');
+    localStorage.removeItem('elec_clash_lb_date');
+    renderLeaderboard('setup-lb', []);
+    renderLeaderboard('end-lb', []);
+    alert('Leaderboard cleared.');
+  }
+}
+function deleteLeaderboardEntry(idx) {
+  const lb = loadLeaderboard();
+  lb.splice(idx, 1);
+  persistLeaderboard(lb);
+  renderLeaderboard('setup-lb', []);
+  renderLeaderboard('end-lb', []);
+}
+
+// PIN modal state
+let _pendingDeleteIdx = null;
+let _pendingDeleteSource = null;
+function openDeleteModal(idx, source) {
+  _pendingDeleteIdx = idx;
+  _pendingDeleteSource = source;
+  document.getElementById('pin-input').value = '';
+  document.getElementById('pin-err').textContent = '';
+  document.getElementById('pin-modal').classList.add('open');
+  setTimeout(() => document.getElementById('pin-input').focus(), 100);
+}
+function closePinModal() {
+  _pendingDeleteIdx = null;
+  document.getElementById('pin-modal').classList.remove('open');
+}
+function confirmPinAction() {
+  const entered = document.getElementById('pin-input').value.trim();
+  if (entered === TEACHER_PIN) {
+    deleteLeaderboardEntry(_pendingDeleteIdx);
+    closePinModal();
+  } else {
+    document.getElementById('pin-err').textContent = '❌ Wrong PIN. Try again.';
+    document.getElementById('pin-input').value = '';
+    document.getElementById('pin-input').focus();
+  }
+}
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && document.getElementById('pin-modal').classList.contains('open')) confirmPinAction(); });
+
+function renderLeaderboard(containerId, newEntries=[]) {
+  autoCheckDailyReset();
+  const lb = loadLeaderboard();
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const today = todayStr();
+  if (lb.length === 0) {
+    container.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:0.85rem;padding:12px;">No scores yet — be the first! ⚡</div>';
+    return;
+  }
+  const newSet = new Set(newEntries.map(e => `${e.name}:${e.score}`));
+  let html = `<div class="day-banner">📅 Today's board — ${today} · auto-clears at midnight</div>`;
+  html += `<table class="lb-table"><thead><tr><th>Rank</th><th>Name</th><th>Class</th><th>Score</th><th>Diff</th><th>Qs</th><th></th></tr></thead><tbody>`;
+  lb.forEach((e,i) => {
+    const rankClass = i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'';
+    const rankIcon = i===0?'🥇':i===1?'🥈':i===2?'🥉':`${i+1}`;
+    const isNew = newSet.has(`${e.name}:${e.score}`);
+    html += `<tr class="${isNew?'new-entry':''}">
+      <td><span class="rank-badge ${rankClass}">${rankIcon}</span></td>
+      <td>${e.name}</td>
+      <td>${e.cls||'—'}</td>
+      <td><strong>${e.score}</strong></td>
+      <td>${e.diff}</td>
+      <td>${e.qPlayed}</td>
+      <td><button class="del-entry-btn" onclick="openDeleteModal(${i},'${containerId}')">🗑️</button></td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+// ===== RESET GAME =====
+function resetGame() {
+  showScreen('setup-screen');
+  renderLeaderboard('setup-lb');
+}
+
+// ===== SHOW SCREEN =====
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ===== CONFETTI =====
+function launchConfetti() {
+  const colours = ['#FF6B9D','#4ECDC4','#FFD700','#51cf66','#a855f7','#FF9F1C'];
+  for (let i=0;i<80;i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'confetti-piece';
+      el.style.cssText = `left:${Math.random()*100}vw;background:${colours[Math.floor(Math.random()*colours.length)]};width:${6+Math.random()*8}px;height:${6+Math.random()*8}px;animation-duration:${1.5+Math.random()*2}s;animation-delay:${Math.random()*0.5}s;border-radius:${Math.random()>0.5?'50%':'2px'}`;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 3000);
+    }, i*30);
+  }
+}
+
+// ===== INIT =====
+renderLeaderboard('setup-lb');
+</script>
+</body>
+</html>

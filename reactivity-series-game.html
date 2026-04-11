@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Reactivity Ranker – Metals</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --p1:#FF6B9D; --p1-light:#FFD6E8; --p1-dark:#e0447a;
+  --p2:#4ECDC4; --p2-light:#C8F5F2; --p2-dark:#2da89f;
+  --centre:#F3EDFF; --centre-dark:#e0d5ff;
+  --bg:#f9f6ff; --text:#2d2d4e;
+  --correct:#52c41a; --wrong:#ff4d4f;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{width:100%;height:100%;overflow:hidden;font-family:'Nunito',sans-serif;background:var(--bg);touch-action:manipulation;}
+
+/* ===== SETUP ===== */
+#setup-screen{display:flex;align-items:center;justify-content:center;width:100%;height:100%;background:linear-gradient(135deg,#FFD6E8 0%,#F3EDFF 50%,#C8F5F2 100%);}
+.setup-card{background:white;border-radius:32px;padding:44px 52px;box-shadow:0 20px 60px rgba(0,0,0,0.15);text-align:center;width:640px;max-width:92vw;}
+.setup-card h1{font-family:'Fredoka One',cursive;font-size:2.2rem;color:var(--text);margin-bottom:4px;}
+.setup-card .subtitle{color:#888;font-size:0.95rem;margin-bottom:28px;}
+.setup-row{display:flex;gap:18px;margin-bottom:18px;}
+.setup-field{flex:1;text-align:left;}
+.setup-field label{display:block;font-weight:700;font-size:0.82rem;color:#666;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.5px;}
+.setup-field input{width:100%;padding:13px 15px;border-radius:13px;border:2px solid #e8e8e8;font-family:'Nunito',sans-serif;font-size:1rem;font-weight:600;outline:none;transition:border 0.2s;}
+.setup-field input:focus{border-color:var(--p1);}
+.setup-field.p2 input:focus{border-color:var(--p2);}
+.q-count-label{font-weight:700;font-size:0.82rem;color:#666;margin-bottom:9px;text-transform:uppercase;letter-spacing:0.5px;text-align:left;}
+.q-pills{display:flex;gap:10px;margin-bottom:24px;}
+.q-pill{flex:1;padding:11px;border-radius:12px;border:2px solid #e8e8e8;background:white;font-family:'Nunito',sans-serif;font-size:1.05rem;font-weight:800;cursor:pointer;transition:all 0.15s;}
+.q-pill.active{background:var(--centre);border-color:#b39ddb;color:var(--text);}
+.q-pill:active{transform:scale(0.95);}
+.start-btn{width:100%;padding:17px;border-radius:15px;border:none;background:linear-gradient(135deg,var(--p1),#c94b8a);color:white;font-family:'Fredoka One',cursive;font-size:1.4rem;cursor:pointer;box-shadow:0 6px 0 #a5235e;transition:all 0.1s;}
+.start-btn:active{transform:translateY(4px);box-shadow:0 2px 0 #a5235e;}
+.school-name{font-size:0.82rem;color:#aaa;margin-top:14px;}
+
+/* ===== GAME LAYOUT ===== */
+#game-screen{display:none;width:100%;height:100%;}
+.game-layout{display:grid;grid-template-columns:1fr 272px 1fr;width:100%;height:100%;}
+
+/* ===== PLAYER PANELS ===== */
+.player-panel{display:flex;flex-direction:column;height:100%;padding:10px;overflow:hidden;}
+.player-panel.p1{background:linear-gradient(160deg,#fff0f6 0%,#fff8fb 100%);border-right:2px solid var(--p1-light);}
+.player-panel.p2{background:linear-gradient(160deg,#f0fffe 0%,#f8ffff 100%);border-left:2px solid var(--p2-light);}
+
+.player-header{display:flex;align-items:center;justify-content:space-between;padding:9px 13px;border-radius:15px;margin-bottom:8px;}
+.p1 .player-header{background:var(--p1-light);}
+.p2 .player-header{background:var(--p2-light);}
+.player-name{font-family:'Fredoka One',cursive;font-size:1.2rem;}
+.p1 .player-name{color:var(--p1-dark);}
+.p2 .player-name{color:var(--p2-dark);}
+.score-badge{font-family:'Fredoka One',cursive;font-size:1.6rem;width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;box-shadow:0 4px 12px rgba(0,0,0,0.2);}
+.p1 .score-badge{background:var(--p1);}
+.p2 .score-badge{background:var(--p2);}
+
+/* ===== TOPIC PICKER ===== */
+.topic-picker{display:flex;flex-direction:column;gap:5px;flex:1;overflow:hidden;}
+.topic-picker-title{font-size:0.75rem;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;color:#aaa;margin-bottom:2px;}
+.topic-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;flex:1;}
+.topic-btn{
+  padding:7px 6px;border-radius:11px;border:2px solid transparent;
+  font-family:'Nunito',sans-serif;font-weight:800;font-size:0.72rem;
+  cursor:pointer;transition:all 0.15s;text-align:center;line-height:1.3;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+}
+.topic-btn .t-icon{font-size:1.1rem;}
+.topic-btn .t-tally{font-size:0.62rem;font-weight:700;opacity:0.7;}
+.p1 .topic-btn{background:var(--p1-light);color:var(--p1-dark);border-color:var(--p1-light);}
+.p1 .topic-btn:active,.p1 .topic-btn:hover{background:var(--p1);color:white;border-color:var(--p1);}
+.p2 .topic-btn{background:var(--p2-light);color:var(--p2-dark);border-color:var(--p2-light);}
+.p2 .topic-btn:active,.p2 .topic-btn:hover{background:var(--p2);color:white;border-color:var(--p2);}
+.topic-btn.random-btn{grid-column:span 2;}
+.p1 .random-btn{background:linear-gradient(135deg,#FFD6E8,#e0d5ff);color:#8B5CF6;border-color:#d8b4fe;}
+.p2 .random-btn{background:linear-gradient(135deg,#C8F5F2,#e0d5ff);color:#8B5CF6;border-color:#d8b4fe;}
+
+/* ===== QUESTION AREA ===== */
+.question-area{display:flex;flex-direction:column;gap:6px;flex:1;overflow:hidden;}
+.question-card{border-radius:14px;padding:12px 14px;margin-bottom:6px;min-height:72px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-weight:700;font-size:0.92rem;line-height:1.4;transition:background 0.3s;position:relative;overflow:hidden;}
+.p1 .question-card{background:white;border:2px solid var(--p1-light);color:var(--text);}
+.p2 .question-card{background:white;border:2px solid var(--p2-light);color:var(--text);}
+.question-card.correct{background:#f6ffed!important;border-color:var(--correct)!important;}
+.question-card.wrong{background:#fff2f0!important;border-color:var(--wrong)!important;}
+.q-meta{display:flex;gap:8px;align-items:center;margin-bottom:4px;}
+.q-num{font-size:0.72rem;font-weight:700;}
+.p1 .q-num{color:var(--p1);}
+.p2 .q-num{color:var(--p2);}
+.topic-tag{font-size:0.65rem;font-weight:800;padding:2px 8px;border-radius:20px;background:var(--centre);color:#9b7fd4;}
+
+.marks-badge{padding:3px 10px;border-radius:20px;font-size:0.73rem;font-weight:800;border:1.5px solid #ffd666;background:#fff7e6;color:#d48806;text-align:center;transition:all 0.3s;margin-bottom:4px;}
+
+.rank-instruction{font-size:0.73rem;font-weight:700;text-align:center;padding:5px 8px;border-radius:9px;margin-bottom:4px;}
+.p1 .rank-instruction{background:var(--p1-light);color:var(--p1-dark);}
+.p2 .rank-instruction{background:var(--p2-light);color:var(--p2-dark);}
+
+.metal-tiles{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;}
+.metal-tile{padding:6px 10px;border-radius:9px;border:2px solid transparent;font-weight:700;font-size:0.8rem;cursor:pointer;transition:all 0.15s;user-select:none;touch-action:manipulation;}
+.p1 .metal-tile{background:var(--p1-light);color:var(--p1-dark);border-color:var(--p1-light);}
+.p2 .metal-tile{background:var(--p2-light);color:var(--p2-dark);border-color:var(--p2-light);}
+.metal-tile:active{transform:scale(0.95);opacity:0.8;}
+.metal-tile.used{opacity:0.3;pointer-events:none;}
+
+.rank-slots{display:flex;flex-direction:column;gap:4px;margin-bottom:6px;}
+.rank-slot{display:flex;align-items:center;gap:7px;padding:6px 9px;border-radius:11px;border:2px dashed #ddd;background:rgba(255,255,255,0.6);min-height:38px;transition:all 0.2s;font-size:0.82rem;}
+.rank-slot.occupied{border-style:solid;background:white;}
+.p1 .rank-slot.occupied{border-color:var(--p1-light);}
+.p2 .rank-slot.occupied{border-color:var(--p2-light);}
+.slot-num{font-family:'Fredoka One',cursive;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;flex-shrink:0;font-size:0.7rem;}
+.p1 .slot-num{background:var(--p1);}
+.p2 .slot-num{background:var(--p2);}
+.slot-label{font-size:0.65rem;color:#aaa;}
+.slot-content{font-weight:700;font-size:0.82rem;color:var(--text);}
+.remove-btn{margin-left:auto;width:20px;height:20px;border-radius:50%;border:none;background:#ffebef;color:#ff6b6b;cursor:pointer;font-size:0.7rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+
+.submit-btn{width:100%;padding:11px;border-radius:13px;border:none;font-family:'Fredoka One',cursive;font-size:1.1rem;color:white;cursor:pointer;box-shadow:0 4px 0 rgba(0,0,0,0.2);transition:all 0.1s;margin-bottom:6px;}
+.p1 .submit-btn{background:var(--p1);box-shadow:0 4px 0 var(--p1-dark);}
+.p2 .submit-btn{background:var(--p2);box-shadow:0 4px 0 var(--p2-dark);}
+.submit-btn:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,0.2);}
+.submit-btn:disabled{opacity:0.4;pointer-events:none;}
+
+.feedback-area{padding:8px 12px;border-radius:11px;margin-bottom:6px;font-weight:700;font-size:0.78rem;text-align:center;min-height:36px;display:flex;align-items:center;justify-content:center;line-height:1.3;}
+.feedback-area.correct{background:#f6ffed;color:#389e0d;border:1.5px solid #b7eb8f;}
+.feedback-area.wrong{background:#fff2f0;color:#cf1322;border:1.5px solid #ffa39e;}
+.feedback-area.empty{background:rgba(255,255,255,0.4);color:#bbb;border:1.5px solid #f0f0f0;}
+
+.history-log{flex:0 0 auto;height:88px;overflow-y:auto;border-radius:11px;padding:7px 9px;font-size:0.68rem;}
+.p1 .history-log{background:rgba(255,107,157,0.05);border:1.5px solid var(--p1-light);}
+.p2 .history-log{background:rgba(78,205,196,0.05);border:1.5px solid var(--p2-light);}
+.log-title{font-weight:800;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;color:#aaa;}
+.log-entry{padding:1px 0;border-bottom:1px solid rgba(0,0,0,0.04);color:#666;line-height:1.3;}
+.log-entry.log-correct{color:#389e0d;}
+.log-entry.log-wrong{color:#cf1322;}
+
+/* ===== CENTRE ===== */
+.centre-col{background:var(--centre);display:flex;flex-direction:column;align-items:center;overflow:hidden;border-left:2px solid var(--centre-dark);border-right:2px solid var(--centre-dark);}
+.centre-top{width:100%;padding:9px 10px 4px;text-align:center;}
+.game-title{font-family:'Fredoka One',cursive;font-size:0.95rem;color:#9b7fd4;margin-bottom:1px;}
+.round-info{font-size:0.68rem;font-weight:700;color:#b39ddb;text-transform:uppercase;letter-spacing:0.5px;}
+.score-display{display:flex;align-items:center;justify-content:center;gap:8px;padding:6px 10px;width:100%;}
+.score-num{font-family:'Fredoka One',cursive;font-size:1.9rem;width:48px;text-align:center;}
+.score-num.p1s{color:var(--p1);}
+.score-num.p2s{color:var(--p2);}
+.vs-badge{font-family:'Fredoka One',cursive;font-size:0.75rem;background:#e8deff;color:#9b7fd4;padding:3px 7px;border-radius:7px;}
+.advantage-banner{font-size:0.68rem;font-weight:800;text-align:center;padding:4px 10px;border-radius:20px;margin:0 10px 6px;background:white;color:#9b7fd4;transition:all 0.4s;}
+.wave-container{flex:1;width:100%;position:relative;overflow:hidden;}
+#waveSVG{width:100%;height:100%;}
+
+/* ===== END SCREEN ===== */
+#end-screen{display:none;position:fixed;inset:0;z-index:100;background:linear-gradient(135deg,#FFD6E8 0%,#F3EDFF 50%,#C8F5F2 100%);flex-direction:column;align-items:center;justify-content:center;}
+.end-card{background:white;border-radius:32px;padding:44px 52px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.15);width:540px;max-width:90vw;position:relative;z-index:2;}
+.end-trophy{font-size:4.5rem;display:block;margin-bottom:6px;}
+.end-winner{font-family:'Fredoka One',cursive;font-size:2.6rem;color:var(--text);}
+.end-subtitle{font-size:0.95rem;color:#888;margin:6px 0 22px;}
+.end-scores{display:flex;gap:20px;justify-content:center;margin-bottom:24px;}
+.end-score-box{padding:14px 26px;border-radius:15px;text-align:center;}
+.end-score-box .name{font-weight:800;font-size:0.85rem;margin-bottom:3px;}
+.end-score-box .pts{font-family:'Fredoka One',cursive;font-size:2rem;}
+.end-p1{background:var(--p1-light);color:var(--p1-dark);}
+.end-p2{background:var(--p2-light);color:var(--p2-dark);}
+.play-again-btn{padding:14px 36px;border-radius:15px;border:none;background:linear-gradient(135deg,var(--p1),#c94b8a);color:white;font-family:'Fredoka One',cursive;font-size:1.3rem;cursor:pointer;box-shadow:0 5px 0 #a5235e;transition:all 0.1s;}
+.play-again-btn:active{transform:translateY(4px);box-shadow:0 1px 0 #a5235e;}
+
+/* ===== ANIMATIONS ===== */
+.cheer-bubble{position:fixed;pointer-events:none;font-family:'Fredoka One',cursive;font-size:1.3rem;background:white;border-radius:18px;padding:7px 14px;box-shadow:0 8px 24px rgba(0,0,0,0.2);animation:cheerPop 1.4s ease-out forwards;z-index:999;white-space:nowrap;}
+@keyframes cheerPop{0%{transform:scale(0) translateY(0);opacity:1;}30%{transform:scale(1.2) translateY(-20px);opacity:1;}70%{transform:scale(1) translateY(-50px);opacity:1;}100%{transform:scale(0.8) translateY(-100px);opacity:0;}}
+.emoji-particle{position:fixed;pointer-events:none;font-size:1.3rem;animation:particleBurst 1.2s ease-out forwards;z-index:998;}
+@keyframes particleBurst{0%{transform:translate(0,0) scale(1);opacity:1;}100%{transform:translate(var(--tx),var(--ty)) scale(0);opacity:0;}}
+.flash-overlay{position:absolute;inset:0;border-radius:14px;pointer-events:none;animation:flashAnim 0.5s ease-out forwards;z-index:10;}
+.flash-overlay.correct{background:rgba(82,196,26,0.3);}
+.flash-overlay.wrong{background:rgba(255,77,79,0.3);}
+@keyframes flashAnim{0%{opacity:1;}100%{opacity:0;}}
+.confetti-piece{position:fixed;width:10px;height:10px;pointer-events:none;animation:confettiFall linear forwards;z-index:1;}
+@keyframes confettiFall{0%{transform:translateY(-20px) rotate(0deg);opacity:1;}100%{transform:translateY(110vh) rotate(720deg);opacity:0;}}
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-thumb{background:#ddd;border-radius:3px;}
+
+/* Credit footer */
+.credit{position:fixed;bottom:6px;right:12px;font-size:0.65rem;color:#ccc;z-index:50;}
+</style>
+</head>
+<body>
+
+<!-- ===== SETUP ===== -->
+<div id="setup-screen">
+  <div class="setup-card">
+    <h1>⚗️ Metal Reactivity Ranker</h1>
+    <p class="subtitle">Two-Player Chemistry Game · Evergreen Secondary School</p>
+    <div class="setup-row">
+      <div class="setup-field">
+        <label>🩷 Player 1 Name</label>
+        <input type="text" id="p1name" placeholder="Player 1" maxlength="18">
+      </div>
+      <div class="setup-field p2">
+        <label>💚 Player 2 Name</label>
+        <input type="text" id="p2name" placeholder="Player 2" maxlength="18">
+      </div>
+    </div>
+    <div class="q-count-label">Questions per player</div>
+    <div class="q-pills">
+      <button class="q-pill" onclick="selectQ(5)">5</button>
+      <button class="q-pill active" onclick="selectQ(10)">10</button>
+      <button class="q-pill" onclick="selectQ(15)">15</button>
+      <button class="q-pill" onclick="selectQ(20)">20</button>
+    </div>
+    <button class="start-btn" onclick="startGame()">⚗️ Start Game!</button>
+    <div class="school-name">Created by Ms Teng · Evergreen Secondary School</div>
+  </div>
+</div>
+
+<!-- ===== GAME ===== -->
+<div id="game-screen">
+  <div class="game-layout">
+
+    <!-- P1 -->
+    <div class="player-panel p1" id="panel1">
+      <div class="player-header">
+        <span class="player-name" id="p1-name-display">Player 1</span>
+        <div class="score-badge" id="p1-score-badge">0</div>
+      </div>
+      <!-- Topic picker shown first -->
+      <div class="topic-picker" id="p1-topic-picker">
+        <div class="topic-picker-title">Choose a topic for Question <span id="p1-qnum-pick">1</span></div>
+        <div class="topic-grid" id="p1-topic-grid"></div>
+      </div>
+      <!-- Question area hidden until topic chosen -->
+      <div class="question-area" id="p1-question-area" style="display:none;">
+        <div class="question-card" id="p1-qcard">
+          <div class="q-meta">
+            <span class="q-num" id="p1-qnum">Q1</span>
+            <span class="topic-tag" id="p1-topic-tag">Topic</span>
+          </div>
+          <div id="p1-qtext">Loading…</div>
+        </div>
+        <div class="marks-badge" id="p1-marks-badge">⭐⭐ 2 marks available</div>
+        <div class="rank-instruction" id="p1-rank-instr"></div>
+        <div class="metal-tiles" id="p1-tiles"></div>
+        <div class="rank-slots" id="p1-slots"></div>
+        <button class="submit-btn" id="p1-submit" onclick="submitAnswer(1)">✓ Submit Answer</button>
+        <div class="feedback-area empty" id="p1-feedback">Pick your answer above!</div>
+      </div>
+      <div class="history-log">
+        <div class="log-title">📋 History Log</div>
+        <div id="p1-log"></div>
+      </div>
+    </div>
+
+    <!-- CENTRE -->
+    <div class="centre-col">
+      <div class="centre-top">
+        <div class="game-title">⚗️ Reactivity Ranker</div>
+        <div class="round-info" id="round-info">Game in progress</div>
+      </div>
+      <div class="score-display">
+        <div class="score-num p1s" id="centre-p1-score">0</div>
+        <div class="vs-badge">VS</div>
+        <div class="score-num p2s" id="centre-p2-score">0</div>
+      </div>
+      <div class="advantage-banner" id="adv-banner">Game in progress! 🔥</div>
+      <div class="wave-container">
+        <svg id="waveSVG" viewBox="0 0 272 400" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+    </div>
+
+    <!-- P2 -->
+    <div class="player-panel p2" id="panel2">
+      <div class="player-header">
+        <div class="score-badge" id="p2-score-badge">0</div>
+        <span class="player-name" id="p2-name-display">Player 2</span>
+      </div>
+      <div class="topic-picker" id="p2-topic-picker">
+        <div class="topic-picker-title">Choose a topic for Question <span id="p2-qnum-pick">1</span></div>
+        <div class="topic-grid" id="p2-topic-grid"></div>
+      </div>
+      <div class="question-area" id="p2-question-area" style="display:none;">
+        <div class="question-card" id="p2-qcard">
+          <div class="q-meta">
+            <span class="q-num" id="p2-qnum">Q1</span>
+            <span class="topic-tag" id="p2-topic-tag">Topic</span>
+          </div>
+          <div id="p2-qtext">Loading…</div>
+        </div>
+        <div class="marks-badge" id="p2-marks-badge">⭐⭐ 2 marks available</div>
+        <div class="rank-instruction" id="p2-rank-instr"></div>
+        <div class="metal-tiles" id="p2-tiles"></div>
+        <div class="rank-slots" id="p2-slots"></div>
+        <button class="submit-btn" id="p2-submit" onclick="submitAnswer(2)">✓ Submit Answer</button>
+        <div class="feedback-area empty" id="p2-feedback">Pick your answer above!</div>
+      </div>
+      <div class="history-log">
+        <div class="log-title">📋 History Log</div>
+        <div id="p2-log"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== END ===== -->
+<div id="end-screen">
+  <div class="end-card">
+    <span class="end-trophy" id="end-trophy">🏆</span>
+    <div class="end-winner" id="end-winner">Player 1 Wins!</div>
+    <div class="end-subtitle" id="end-subtitle">Congratulations!</div>
+    <div class="end-scores">
+      <div class="end-score-box end-p1">
+        <div class="name" id="end-p1-name">Player 1</div>
+        <div class="pts" id="end-p1-pts">0</div>
+      </div>
+      <div class="end-score-box end-p2">
+        <div class="name" id="end-p2-name">Player 2</div>
+        <div class="pts" id="end-p2-pts">0</div>
+      </div>
+    </div>
+    <button class="play-again-btn" onclick="playAgain()">🔄 Play Again</button>
+  </div>
+</div>
+
+<div class="credit">Created by Ms Teng</div>
+
+<script>
+// ===================== QUESTION BANK =====================
+const TOPICS = {
+  reactivity: { label:'Reactivity Series', icon:'⚗️', color:'#FF6B9D' },
+  reduction:  { label:'Reduction',          icon:'🔥', color:'#ff7a45' },
+  displacement:{ label:'Displacement',      icon:'⚡', color:'#faad14' },
+  thermal:    { label:'Thermal Decomp.',    icon:'💥', color:'#722ed1' },
+  extraction: { label:'Extraction',         icon:'⛏️', color:'#52c41a' },
+  rusting:    { label:'Rusting',            icon:'🦀', color:'#13c2c2' },
+};
+
+const QB = {
+  reactivity:[
+    {type:'rank', q:'Rank from MOST to LEAST reactive:', metals:['Potassium','Sodium','Calcium','Magnesium'], ans:['Potassium','Sodium','Calcium','Magnesium']},
+    {type:'rank', q:'Rank from MOST to LEAST reactive:', metals:['Zinc','Iron','Lead','Copper'], ans:['Zinc','Iron','Lead','Copper']},
+    {type:'rank', q:'Rank from MOST to LEAST reactive:', metals:['Magnesium','Aluminium','Zinc','Iron'], ans:['Magnesium','Aluminium','Zinc','Iron']},
+    {type:'rank', q:'Rank from MOST to LEAST reactive:', metals:['Iron','Lead','Copper','Silver'], ans:['Iron','Lead','Copper','Silver']},
+    {type:'rank', q:'Rank from MOST to LEAST reactive:', metals:['Sodium','Calcium','Magnesium','Aluminium'], ans:['Sodium','Calcium','Magnesium','Aluminium']},
+    {type:'rank', q:'Rank from MOST to LEAST reactive:', metals:['Copper','Silver','Gold','Platinum'], ans:['Copper','Silver','Gold','Platinum']},
+    {type:'mcq',  q:'Which metal reacts VIGOROUSLY with cold water?', opts:['Magnesium','Zinc','Sodium','Copper'], ans:'Sodium'},
+    {type:'mcq',  q:'What gas is produced when a metal reacts with water or dilute acid?', opts:['Oxygen','Carbon dioxide','Hydrogen','Nitrogen'], ans:'Hydrogen'},
+    {type:'mcq',  q:'Which metal does NOT react with dilute hydrochloric acid?', opts:['Zinc','Iron','Copper','Magnesium'], ans:'Copper'},
+    {type:'mcq',  q:'Which metal reacts with steam but NOT cold water?', opts:['Potassium','Sodium','Magnesium','Copper'], ans:'Magnesium'},
+    {type:'mcq',  q:'What is the product when iron reacts with steam?', opts:['Fe₂O₃','Fe₃O₄','FeO','No reaction'], ans:'Fe₃O₄'},
+    {type:'tf',   q:'Potassium is more reactive than sodium.', ans:'True'},
+    {type:'tf',   q:'Copper reacts with dilute hydrochloric acid to produce hydrogen gas.', ans:'False'},
+    {type:'tf',   q:'Magnesium reacts more vigorously with steam than with cold water.', ans:'True'},
+    {type:'tf',   q:'Iron reacts with cold water to produce iron hydroxide and hydrogen.', ans:'False'},
+    {type:'tf',   q:'Aluminium appears unreactive in air due to a protective oxide layer.', ans:'True'},
+  ],
+  reduction:[
+    {type:'rank', q:'Rank from EASIEST to HARDEST to reduce (by carbon or hydrogen):', metals:['Copper oxide','Zinc oxide','Iron oxide'], ans:['Copper oxide','Zinc oxide','Iron oxide']},
+    {type:'mcq',  q:'Which reducing agent is used to extract iron in the blast furnace?', opts:['Hydrogen','Carbon (coke)','Aluminium','Sodium'], ans:'Carbon (coke)'},
+    {type:'mcq',  q:'What are the products when copper oxide is reduced by hydrogen?', opts:['Copper and water','Copper oxide and H₂','Copper and oxygen','CuH₂'], ans:'Copper and water'},
+    {type:'mcq',  q:'Which metal oxide CANNOT be reduced by carbon or hydrogen?', opts:['Copper oxide','Zinc oxide','Potassium oxide','Iron oxide'], ans:'Potassium oxide'},
+    {type:'mcq',  q:'What is produced when iron oxide is reduced by carbon monoxide in the blast furnace?', opts:['Iron and CO₂','Iron and O₂','Iron oxide and C','Steel and CO₂'], ans:'Iron and CO₂'},
+    {type:'tf',   q:'Carbon can reduce zinc oxide to produce zinc metal.', ans:'True'},
+    {type:'tf',   q:'Hydrogen can reduce magnesium oxide to produce magnesium metal.', ans:'False'},
+    {type:'tf',   q:'Only metals below carbon in the reactivity series can be extracted by reduction with carbon.', ans:'True'},
+    {type:'tf',   q:'Carbon monoxide acts as a reducing agent in the blast furnace.', ans:'True'},
+  ],
+  displacement:[
+    {type:'rank', q:'Rank from MOST to LEAST vigorous displacement reaction (all with CuSO₄):', metals:['Mg + CuSO₄','Zn + CuSO₄','Fe + CuSO₄'], ans:['Mg + CuSO₄','Zn + CuSO₄','Fe + CuSO₄']},
+    {type:'mcq',  q:'Iron is added to copper sulfate solution. What is observed?', opts:['Blue solution deepens','Brown solid forms, blue colour fades','No reaction occurs','Green gas produced'], ans:'Brown solid forms, blue colour fades'},
+    {type:'mcq',  q:'Which metal would NOT displace hydrogen from dilute acid?', opts:['Iron','Zinc','Copper','Magnesium'], ans:'Copper'},
+    {type:'mcq',  q:'Which metal displaces silver from silver nitrate solution?', opts:['Gold','Platinum','Copper','Silver'], ans:'Copper'},
+    {type:'mcq',  q:'What is seen when magnesium is added to copper sulfate solution?', opts:['No change','Blue colour deepens','Brown solid forms, solution loses blue colour','Yellow precipitate'], ans:'Brown solid forms, solution loses blue colour'},
+    {type:'tf',   q:'Copper can displace zinc from zinc sulfate solution.', ans:'False'},
+    {type:'tf',   q:'Zinc displaces iron from iron sulfate solution.', ans:'True'},
+    {type:'tf',   q:'Lead displaces copper from copper nitrate solution.', ans:'True'},
+    {type:'tf',   q:'A more reactive metal displaces a less reactive metal from its salt solution.', ans:'True'},
+  ],
+  thermal:[
+    {type:'rank', q:'Rank from EASIEST to HARDEST to thermally decompose:', metals:['CuCO₃','ZnCO₃','CaCO₃'], ans:['CuCO₃','ZnCO₃','CaCO₃']},
+    {type:'mcq',  q:'What gas is given off when a metal carbonate is thermally decomposed?', opts:['Oxygen','Hydrogen','Carbon dioxide','Nitrogen'], ans:'Carbon dioxide'},
+    {type:'mcq',  q:'Which carbonate decomposes most easily on heating?', opts:['Calcium carbonate','Potassium carbonate','Copper carbonate','Sodium carbonate'], ans:'Copper carbonate'},
+    {type:'mcq',  q:'What colour change is seen when copper carbonate is heated?', opts:['White to black','Green to black','Blue to red','Orange to grey'], ans:'Green to black'},
+    {type:'mcq',  q:'Which metal nitrate decomposes to give the metal, nitrogen dioxide and oxygen?', opts:['Potassium nitrate','Sodium nitrate','Copper nitrate','Gold nitrate'], ans:'Gold nitrate'},
+    {type:'tf',   q:'Potassium carbonate decomposes easily on heating.', ans:'False'},
+    {type:'tf',   q:'Gold oxide decomposes on gentle heating to give gold and oxygen.', ans:'True'},
+    {type:'tf',   q:'Silver oxide decomposes on heating more easily than magnesium oxide.', ans:'True'},
+    {type:'tf',   q:'Less reactive metals tend to have carbonates that decompose more easily.', ans:'True'},
+  ],
+  extraction:[
+    {type:'rank', q:'Rank from LEAST to MOST energy-intensive extraction method:', metals:['Found native','Reduction by carbon','Electrolysis'], ans:['Found native','Reduction by carbon','Electrolysis']},
+    {type:'rank', q:'Rank from CHEAPEST to MOST EXPENSIVE to extract:', metals:['Copper','Iron','Aluminium'], ans:['Copper','Iron','Aluminium']},
+    {type:'mcq',  q:'Why is electrolysis used to extract aluminium instead of carbon reduction?', opts:['Aluminium is cheaper','Aluminium is more reactive than carbon','Carbon reacts with aluminium','Aluminium melts easily'], ans:'Aluminium is more reactive than carbon'},
+    {type:'mcq',  q:'Which metals are found native (uncombined) in nature?', opts:['Iron and copper','Zinc and lead','Gold and platinum','Sodium and potassium'], ans:'Gold and platinum'},
+    {type:'mcq',  q:'What is the iron ore used in the blast furnace?', opts:['Bauxite','Malachite','Haematite','Galena'], ans:'Haematite'},
+    {type:'tf',   q:'Aluminium is extracted by reduction with carbon.', ans:'False'},
+    {type:'tf',   q:'Iron is extracted from its ore by electrolysis.', ans:'False'},
+    {type:'tf',   q:'Zinc can be extracted by reduction with carbon.', ans:'True'},
+    {type:'tf',   q:'The more reactive a metal is, the harder and more expensive it is to extract.', ans:'True'},
+  ],
+  rusting:[
+    {type:'mcq',  q:'What TWO conditions are needed for iron to rust?', opts:['Heat and oxygen','Water and oxygen','Water and carbon dioxide','Oxygen and salt'], ans:'Water and oxygen'},
+    {type:'mcq',  q:'Which method of rust prevention uses a more reactive metal attached to iron?', opts:['Painting','Galvanising','Sacrificial protection','Electroplating'], ans:'Sacrificial protection'},
+    {type:'mcq',  q:'Which metal is used for galvanising iron?', opts:['Copper','Silver','Zinc','Tin'], ans:'Zinc'},
+    {type:'mcq',  q:'What is the chemical name for rust?', opts:['Iron oxide','Iron carbonate','Hydrated iron(III) oxide','Iron hydroxide'], ans:'Hydrated iron(III) oxide'},
+    {type:'mcq',  q:'Why does iron rust faster in salt water than in pure water?', opts:['Salt reacts with iron directly','Salt water conducts electricity better, speeding up corrosion','Salt contains oxygen','Salt removes the oxide layer'], ans:'Salt water conducts electricity better, speeding up corrosion'},
+    {type:'tf',   q:'Iron rusts faster in salt water than in pure water.', ans:'True'},
+    {type:'tf',   q:'Painting iron prevents rusting by keeping out water and oxygen.', ans:'True'},
+    {type:'tf',   q:'Galvanising protects iron even if the zinc layer is scratched.', ans:'True'},
+    {type:'tf',   q:'Copper rusts in the same way as iron.', ans:'False'},
+  ],
+};
+
+// ===================== STATE =====================
+let p1Name='Player 1', p2Name='Player 2';
+let questionCount=10;
+let p1Score=0, p2Score=0;
+let p1QIdx=0, p2QIdx=0;
+let p1Done=false, p2Done=false;
+let p1Attempts=0, p2Attempts=0;
+const MAX_ATTEMPTS=3;
+const BLOCK_SIZE=5;
+// Topic tally per player: {topicKey: count}
+let p1Tally={}, p2Tally={};
+// Used question ids per topic per player to avoid repeats
+let p1Used={}, p2Used={};
+// Slots
+let p1Slots=[], p2Slots=[];
+// Block tracking — up to BLOCK_SIZE questions per chosen topic
+let p1CurrentTopic=null, p2CurrentTopic=null;
+let p1BlockCount=0,  p2BlockCount=0;
+let p1DoneTopics=new Set(), p2DoneTopics=new Set();
+// Wave
+let waveAnim=50, waveTarget=50, animFrame=null;
+
+// ===================== SETUP =====================
+function selectQ(n){
+  questionCount=n;
+  document.querySelectorAll('.q-pill').forEach(b=>b.classList.toggle('active',parseInt(b.textContent)===n));
+}
+
+function shuffle(arr){return [...arr].sort(()=>Math.random()-0.5);}
+
+function startGame(){
+  p1Name=document.getElementById('p1name').value.trim()||'Player 1';
+  p2Name=document.getElementById('p2name').value.trim()||'Player 2';
+  document.getElementById('p1-name-display').textContent=p1Name;
+  document.getElementById('p2-name-display').textContent=p2Name;
+  document.getElementById('end-p1-name').textContent=p1Name;
+  document.getElementById('end-p2-name').textContent=p2Name;
+
+  p1Score=0;p2Score=0;p1QIdx=0;p2QIdx=0;
+  p1Done=false;p2Done=false;
+  p1Attempts=0;p2Attempts=0;
+  p1Tally={};p2Tally={};
+  p1Used={};p2Used={};
+  p1Slots=[];p2Slots=[];
+  p1CurrentTopic=null;p2CurrentTopic=null;
+  p1BlockCount=0;p2BlockCount=0;
+  p1DoneTopics=new Set();p2DoneTopics=new Set();
+  waveAnim=50;waveTarget=50;
+
+  document.getElementById('p1-score-badge').textContent='0';
+  document.getElementById('p2-score-badge').textContent='0';
+  document.getElementById('centre-p1-score').textContent='0';
+  document.getElementById('centre-p2-score').textContent='0';
+  document.getElementById('p1-log').innerHTML='';
+  document.getElementById('p2-log').innerHTML='';
+
+  document.getElementById('setup-screen').style.display='none';
+  document.getElementById('game-screen').style.display='block';
+
+  showTopicPicker(1);
+  showTopicPicker(2);
+  drawWave();
+  updateAdvBanner();
+  updateRoundInfo();
+}
+
+// ===================== TOPIC PICKER =====================
+function buildTopicGrid(player){
+  const grid=document.getElementById(`p${player}-topic-grid`);
+  grid.innerHTML='';
+  const tally=player===1?p1Tally:p2Tally;
+  const done=player===1?p1DoneTopics:p2DoneTopics;
+  Object.keys(TOPICS).forEach(key=>{
+    const t=TOPICS[key];
+    const count=tally[key]||0;
+    const isDone=done.has(key);
+    const btn=document.createElement('button');
+    btn.className='topic-btn';
+    btn.innerHTML=`<span class="t-icon">${t.icon}</span><span>${t.label}</span><span class="t-tally">${isDone?'✅ Complete':count+' attempted'}</span>`;
+    if(isDone){
+      btn.style.opacity='0.38';btn.style.pointerEvents='none';
+      btn.style.filter='grayscale(0.8)';
+    } else {
+      btn.onclick=()=>pickTopic(player,key);
+    }
+    grid.appendChild(btn);
+  });
+  // Random — only available topics
+  const rnd=document.createElement('button');
+  rnd.className='topic-btn random-btn';
+  rnd.innerHTML=`<span class="t-icon">🎲</span><span>Random Topic!</span>`;
+  rnd.onclick=()=>{
+    const available=Object.keys(TOPICS).filter(k=>!done.has(k));
+    if(available.length===0) return;
+    pickTopic(player,available[Math.floor(Math.random()*available.length)]);
+  };
+  grid.appendChild(rnd);
+}
+
+function showTopicPicker(player){
+  document.getElementById(`p${player}-topic-picker`).style.display='flex';
+  document.getElementById(`p${player}-question-area`).style.display='none';
+  document.getElementById(`p${player}-qnum-pick`).textContent=(player===1?p1QIdx:p2QIdx)+1;
+  buildTopicGrid(player);
+}
+
+function pickTopic(player, topicKey){
+  // Set active topic & reset block counter
+  if(player===1){p1CurrentTopic=topicKey;p1BlockCount=0;}
+  else{p2CurrentTopic=topicKey;p2BlockCount=0;}
+
+  document.getElementById(`p${player}-topic-picker`).style.display='none';
+  document.getElementById(`p${player}-question-area`).style.display='flex';
+
+  loadNextInBlock(player);
+}
+
+function loadNextInBlock(player){
+  const topicKey=player===1?p1CurrentTopic:p2CurrentTopic;
+  // Get unused question from this topic
+  const used=player===1?p1Used:p2Used;
+  if(!used[topicKey]) used[topicKey]=[];
+  const pool=QB[topicKey].filter((_,i)=>!used[topicKey].includes(i));
+  let qIndex;
+  if(pool.length===0){used[topicKey]=[];qIndex=Math.floor(Math.random()*QB[topicKey].length);}
+  else{qIndex=QB[topicKey].indexOf(pool[Math.floor(Math.random()*pool.length)]);}
+  used[topicKey].push(qIndex);
+  const q=QB[topicKey][qIndex];
+
+  // Update tally
+  const tally=player===1?p1Tally:p2Tally;
+  tally[topicKey]=(tally[topicKey]||0)+1;
+
+  loadQuestion(player,q,topicKey);
+}
+
+// ===================== LOAD QUESTION =====================
+function loadQuestion(player, q, topicKey){
+  if(player===1) p1Attempts=0; else p2Attempts=0;
+  if(player===1) p1Slots=[]; else p2Slots=[];
+
+  const qcard=document.getElementById(`p${player}-qcard`);
+  const qtext=document.getElementById(`p${player}-qtext`);
+  const qnum=document.getElementById(`p${player}-qnum`);
+  const topicTag=document.getElementById(`p${player}-topic-tag`);
+  const tilesEl=document.getElementById(`p${player}-tiles`);
+  const slotsEl=document.getElementById(`p${player}-slots`);
+  const submitBtn=document.getElementById(`p${player}-submit`);
+  const instr=document.getElementById(`p${player}-rank-instr`);
+  const feedback=document.getElementById(`p${player}-feedback`);
+
+  // Store current question on element for submit
+  qcard.dataset.topicKey=topicKey;
+  qcard.dataset.qtype=q.type;
+  qcard.dataset.qans=JSON.stringify(q.ans||q.answer||'');
+  qcard.dataset.qmetals=JSON.stringify(q.metals||q.opts||[]);
+  qcard.dataset.qfull=JSON.stringify(q);
+
+  const blockCount=player===1?p1BlockCount:p2BlockCount;
+  const qIdx=player===1?p1QIdx:p2QIdx;
+  const remaining=questionCount-qIdx;
+  const blockSize=Math.min(BLOCK_SIZE,remaining);
+  qcard.className='question-card';
+  qnum.textContent=`Q${qIdx+1} · Topic ${blockCount+1}/${blockSize}`;
+  topicTag.textContent=`${TOPICS[topicKey].icon} ${TOPICS[topicKey].label}`;
+  qtext.textContent=q.q;
+  feedback.className='feedback-area empty';
+  feedback.textContent='Pick your answer above!';
+  submitBtn.disabled=false;
+  updateMarksBadge(player,2);
+
+  tilesEl.innerHTML='';
+  slotsEl.innerHTML='';
+  tilesEl.style.flexDirection='';
+  tilesEl.style.flexWrap='wrap';
+
+  if(q.type==='rank'){
+    instr.textContent='Tap metals to rank ↓ (position 1 = most reactive / easiest)';
+    const shuffled=shuffle(q.metals||q.ans);
+    shuffled.forEach(m=>{
+      const btn=document.createElement('button');
+      btn.className='metal-tile';btn.textContent=m;btn.dataset.metal=m;
+      btn.onclick=()=>addToSlot(player,m,btn,q);
+      tilesEl.appendChild(btn);
+    });
+    (q.metals||q.ans).forEach((_,i)=>{
+      const slot=document.createElement('div');
+      slot.className='rank-slot';slot.dataset.idx=i;
+      const lbl=i===0?'(1st / most)':i===(q.metals||q.ans).length-1?'(last / least)':'';
+      slot.innerHTML=`<span class="slot-num">${i+1}</span><span class="slot-label">${lbl}</span><span class="slot-content"></span>`;
+      slotsEl.appendChild(slot);
+    });
+  } else if(q.type==='mcq'){
+    instr.textContent='Tap the correct answer:';
+    q.opts.forEach(opt=>{
+      const btn=document.createElement('button');
+      btn.className='metal-tile';
+      btn.style.flexBasis='calc(50% - 2px)';
+      btn.style.padding='8px 6px';btn.style.textAlign='center';btn.style.fontSize='0.75rem';
+      btn.textContent=opt;
+      btn.onclick=()=>selectMCQ(player,opt,btn);
+      tilesEl.appendChild(btn);
+    });
+    const slot=document.createElement('div');
+    slot.className='rank-slot occupied';
+    slot.innerHTML=`<span class="slot-num">✓</span><span class="slot-content" id="p${player}-mcq-sel">— tap an option —</span>`;
+    slotsEl.appendChild(slot);
+  } else if(q.type==='tf'){
+    instr.textContent='Is this statement True or False?';
+    ['True','False'].forEach(opt=>{
+      const btn=document.createElement('button');
+      btn.className='metal-tile';
+      btn.style.flexBasis='calc(50% - 2px)';
+      btn.style.padding='10px 6px';btn.style.fontSize='0.85rem';
+      btn.textContent=opt==='True'?'✅ True':'❌ False';btn.dataset.val=opt;
+      btn.onclick=()=>selectTF(player,opt,btn);
+      tilesEl.appendChild(btn);
+    });
+    const slot=document.createElement('div');
+    slot.className='rank-slot occupied';
+    slot.innerHTML=`<span class="slot-num">✓</span><span class="slot-content" id="p${player}-tf-sel">— tap True or False —</span>`;
+    slotsEl.appendChild(slot);
+  }
+  updateRoundInfo();
+}
+
+function addToSlot(player,metal,btn,q){
+  const slots=player===1?p1Slots:p2Slots;
+  const metals=q.metals||q.ans;
+  if(slots.length>=metals.length) return;
+  slots.push(metal);btn.classList.add('used');
+  const slotsEl=document.getElementById(`p${player}-slots`);
+  const slotDiv=slotsEl.querySelectorAll('.rank-slot')[slots.length-1];
+  if(slotDiv){
+    slotDiv.classList.add('occupied');
+    slotDiv.querySelector('.slot-content').textContent=metal;
+    const rb=document.createElement('button');
+    rb.className='remove-btn';rb.textContent='✕';
+    rb.onclick=()=>removeFromSlot(player,slots.length-1,q);
+    slotDiv.appendChild(rb);
+  }
+}
+
+function removeFromSlot(player,idx,q){
+  const slots=player===1?p1Slots:p2Slots;
+  const removed=slots.splice(idx);
+  const tilesEl=document.getElementById(`p${player}-tiles`);
+  removed.forEach(m=>{
+    const tile=[...tilesEl.querySelectorAll('.metal-tile')].find(t=>t.dataset.metal===m&&t.classList.contains('used'));
+    if(tile) tile.classList.remove('used');
+  });
+  const slotsEl=document.getElementById(`p${player}-slots`);
+  slotsEl.querySelectorAll('.rank-slot').forEach((sd,i)=>{
+    if(i>=idx){
+      sd.classList.remove('occupied');sd.querySelector('.slot-content').textContent='';
+      const rb=sd.querySelector('.remove-btn');if(rb)rb.remove();
+    }
+  });
+}
+
+function selectMCQ(player,val,btn){
+  document.querySelectorAll(`#p${player}-tiles .metal-tile`).forEach(b=>{b.style.opacity='0.5';b.style.transform='';});
+  btn.style.opacity='1';btn.style.transform='scale(1.05)';
+  const sel=document.getElementById(`p${player}-mcq-sel`);if(sel)sel.textContent=val;
+  if(player===1)p1Slots=['MCQ:'+val];else p2Slots=['MCQ:'+val];
+}
+
+function selectTF(player,val,btn){
+  document.querySelectorAll(`#p${player}-tiles .metal-tile`).forEach(b=>{b.style.opacity='0.5';b.style.transform='';});
+  btn.style.opacity='1';btn.style.transform='scale(1.05)';
+  const sel=document.getElementById(`p${player}-tf-sel`);if(sel)sel.textContent=val==='True'?'✅ True':'❌ False';
+  if(player===1)p1Slots=['TF:'+val];else p2Slots=['TF:'+val];
+}
+
+// ===================== MARKS BADGE =====================
+function updateMarksBadge(player,marks){
+  const badge=document.getElementById(`p${player}-marks-badge`);
+  if(!badge)return;
+  if(marks===2){badge.textContent='⭐⭐ 2 marks available';badge.style.background='#fff7e6';badge.style.color='#d48806';badge.style.borderColor='#ffd666';}
+  else if(marks===1){badge.textContent='⭐ 1 mark available';badge.style.background='#f9f0ff';badge.style.color='#722ed1';badge.style.borderColor='#d3adf7';}
+  else{badge.textContent='—';badge.style.background='#f5f5f5';badge.style.color='#aaa';badge.style.borderColor='#eee';}
+}
+
+// ===================== HINTS =====================
+function getRankHint(q,submitted,attempt){
+  const ans=q.ans;
+  const wrong=submitted.map((m,i)=>({m,correct:ans[i],pos:i+1,ok:m===ans[i]})).filter(x=>!x.ok);
+  if(!wrong.length)return'';
+  const f=wrong[0];
+  if(attempt===1) return`💡 Hint: Check position ${f.pos}. Is ${f.m} really in the right place? Think about how reactive it is compared to the others.`;
+  return`💡 Hint: ${f.m} is misplaced. Think carefully about which metals it is MORE reactive than and which it is LESS reactive than.`;
+}
+function getMCQHint(attempt){
+  if(attempt===1)return`💡 Hint: Think about the reactivity series and what typically happens in this type of reaction. Can you eliminate any options?`;
+  return`💡 Hint: Try eliminating options you are confident are wrong. Focus on what you know about reactivity and typical chemical behaviour.`;
+}
+function getTFHint(attempt){
+  if(attempt===1)return`💡 Hint: Think carefully about where this metal sits in the reactivity series. Does the reaction described actually happen?`;
+  return`💡 Hint: Re-read the statement word by word. Is every part of it accurate, including the products or conditions mentioned?`;
+}
+
+// ===================== SUBMIT =====================
+const CHEERS=['🔥 Brilliant!','⚡ Nailed it!','💥 Correct!','🌟 Amazing!','🎯 Spot on!','👏 Well done!','🏅 Superb!','✨ Perfect!'];
+const PARTICLES=['🌟','⭐','✨','💥','🎉','🎊','🔥','💫','🏅','👑'];
+
+function submitAnswer(player){
+  const qcard=document.getElementById(`p${player}-qcard`);
+  const q=JSON.parse(qcard.dataset.qfull);
+  const slots=player===1?p1Slots:p2Slots;
+  const submitBtn=document.getElementById(`p${player}-submit`);
+  const feedback=document.getElementById(`p${player}-feedback`);
+  let attempts=player===1?p1Attempts:p2Attempts;
+
+  let isCorrect=false;
+  let selectedDisplay='';
+
+  if(q.type==='rank'){
+    if(slots.length<(q.metals||q.ans).length){feedback.className='feedback-area wrong';feedback.textContent='⚠️ Please rank all items before submitting!';return;}
+    isCorrect=slots.every((m,i)=>m===q.ans[i]);
+    selectedDisplay=slots.join(' → ');
+  } else if(q.type==='mcq'){
+    if(!slots.length){feedback.className='feedback-area wrong';feedback.textContent='⚠️ Please select an answer!';return;}
+    const sel=slots[0].replace('MCQ:','');
+    isCorrect=sel===q.ans;selectedDisplay=sel;
+  } else if(q.type==='tf'){
+    if(!slots.length){feedback.className='feedback-area wrong';feedback.textContent='⚠️ Please select True or False!';return;}
+    const sel=slots[0].replace('TF:','');
+    isCorrect=sel===q.ans;selectedDisplay=sel;
+  }
+
+  attempts++;
+  if(player===1)p1Attempts=attempts;else p2Attempts=attempts;
+
+  // Flash
+  const flash=document.createElement('div');
+  flash.className=`flash-overlay ${isCorrect?'correct':'wrong'}`;
+  qcard.appendChild(flash);setTimeout(()=>flash.remove(),500);
+
+  if(isCorrect){
+    const marks=attempts===1?2:1;
+    if(player===1){p1Score+=marks;document.getElementById('p1-score-badge').textContent=p1Score;}
+    else{p2Score+=marks;document.getElementById('p2-score-badge').textContent=p2Score;}
+    document.getElementById(`centre-p${player}-score`).textContent=player===1?p1Score:p2Score;
+    submitBtn.disabled=true;
+    document.querySelectorAll(`#p${player}-tiles .metal-tile`).forEach(b=>b.style.pointerEvents='none');
+    qcard.className='question-card correct';
+    feedback.className='feedback-area correct';
+    feedback.textContent=`✅ Correct! +${marks} mark${marks>1?'s':''}! ${marks===2?'🌟 First try!':'👍 Well done!'}`;
+    updateMarksBadge(player,0);
+    showCheer(player);showParticles(player);updateWave();
+    addLog(player,q,true,selectedDisplay,attempts,marks);
+    updateAdvBanner();
+    setTimeout(()=>advanceQuestion(player),1600);
+  } else {
+    qcard.className='question-card wrong';
+    if(attempts>=MAX_ATTEMPTS){
+      submitBtn.disabled=true;
+      document.querySelectorAll(`#p${player}-tiles .metal-tile`).forEach(b=>b.style.pointerEvents='none');
+      feedback.className='feedback-area wrong';
+      feedback.textContent='⏭️ Moving on — discuss this one with your teacher after the game!';
+      updateMarksBadge(player,0);
+      addLog(player,q,false,selectedDisplay,attempts,0);
+      updateAdvBanner();
+      setTimeout(()=>advanceQuestion(player),2000);
+    } else {
+      updateMarksBadge(player,1);
+      let hint='';
+      if(q.type==='rank') hint=getRankHint(q,slots,attempts);
+      else if(q.type==='mcq') hint=getMCQHint(attempts);
+      else hint=getTFHint(attempts);
+      feedback.className='feedback-area wrong';
+      feedback.textContent=`❌ Not quite. ${hint}`;
+      // Reset input
+      if(q.type==='rank'){
+        resetRankSlots(player,q);
+      } else {
+        document.querySelectorAll(`#p${player}-tiles .metal-tile`).forEach(b=>{b.style.pointerEvents='auto';b.style.opacity='1';b.style.transform='';});
+        if(player===1)p1Slots=[];else p2Slots=[];
+        const sel=document.getElementById(`p${player}-mcq-sel`)||document.getElementById(`p${player}-tf-sel`);
+        if(sel)sel.textContent=q.type==='mcq'?'— tap again —':'— tap True or False —';
+      }
+    }
+  }
+}
+
+function resetRankSlots(player,q){
+  const slotsEl=document.getElementById(`p${player}-slots`);
+  slotsEl.querySelectorAll('.rank-slot').forEach(sd=>{
+    sd.classList.remove('occupied');sd.querySelector('.slot-content').textContent='';
+    const rb=sd.querySelector('.remove-btn');if(rb)rb.remove();
+  });
+  document.querySelectorAll(`#p${player}-tiles .metal-tile`).forEach(b=>b.classList.remove('used'));
+  if(player===1)p1Slots=[];else p2Slots=[];
+}
+
+function advanceQuestion(player){
+  // Increment global question index
+  if(player===1) p1QIdx++; else p2QIdx++;
+  const qIdx=player===1?p1QIdx:p2QIdx;
+
+  // Check if game is done for this player
+  if(qIdx>=questionCount){
+    if(player===1) p1Done=true; else p2Done=true;
+    checkEnd(); return;
+  }
+
+  // Increment block counter
+  if(player===1) p1BlockCount++; else p2BlockCount++;
+  const blockCount=player===1?p1BlockCount:p2BlockCount;
+  const remaining=questionCount-qIdx;
+  const blockSize=Math.min(BLOCK_SIZE,remaining+blockCount); // original block size
+
+  // Work out how many Qs this block had
+  const topicKey=player===1?p1CurrentTopic:p2CurrentTopic;
+  const done=player===1?p1DoneTopics:p2DoneTopics;
+  const tally=player===1?p1Tally:p2Tally;
+  const topicTotal=tally[topicKey]||0;
+
+  // Block is done when BLOCK_SIZE answered OR no more questions left
+  // Calculate block size for current block: min(BLOCK_SIZE, remaining at block start)
+  // We track how many in this block via blockCount
+  const qAtBlockStart=qIdx-blockCount; // global idx when block started (after increment)
+  const thisBlockSize=Math.min(BLOCK_SIZE, questionCount-qAtBlockStart);
+
+  if(blockCount>=thisBlockSize){
+    // Block complete — mark topic done, return to picker
+    done.add(topicKey);
+    if(player===1){p1CurrentTopic=null;p1BlockCount=0;}
+    else{p2CurrentTopic=null;p2BlockCount=0;}
+    showTopicPicker(player);
+  } else {
+    // Continue in same topic
+    loadNextInBlock(player);
+  }
+  updateRoundInfo();
+}
+
+function addLog(player,q,correct,display,attempts,marks){
+  const log=document.getElementById(`p${player}-log`);
+  const entry=document.createElement('div');
+  const qShort=q.q.length>30?q.q.slice(0,30)+'…':q.q;
+  if(correct){entry.className='log-entry log-correct';entry.textContent=`✅ ${qShort} (+${marks}pt, attempt ${attempts})`;}
+  else if(attempts>=MAX_ATTEMPTS){entry.className='log-entry log-wrong';entry.textContent=`⏭️ ${qShort} (skipped)`;}
+  else{entry.className='log-entry log-wrong';entry.textContent=`❌ ${qShort}`;}
+  log.appendChild(entry);log.scrollTop=log.scrollHeight;
+}
+
+// ===================== WAVE =====================
+function updateWave(){
+  const maxPts=questionCount*2;
+  waveTarget=50-((p1Score-p2Score)/maxPts)*38;
+  waveTarget=Math.max(10,Math.min(90,waveTarget));
+  animateWave();
+}
+function animateWave(){
+  if(animFrame)cancelAnimationFrame(animFrame);
+  function step(){const d=waveTarget-waveAnim;if(Math.abs(d)<0.4){waveAnim=waveTarget;drawWave();return;}waveAnim+=d*0.08;drawWave();animFrame=requestAnimationFrame(step);}
+  step();
+}
+function drawWave(){
+  const svg=document.getElementById('waveSVG');
+  const W=272,H=400,amp=16,freq=3;
+  const dx=W*(waveAnim/100);
+  let p1Path=`M0,0 `;
+  for(let y=0;y<=H;y+=4){p1Path+=`L${dx+Math.sin(y/H*Math.PI*freq)*amp},${y} `;}
+  p1Path+=`L0,${H} Z`;
+  svg.innerHTML=`
+    <defs>
+      <linearGradient id="g1" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#FFB3CE"/><stop offset="100%" stop-color="#FFD6E8"/></linearGradient>
+      <linearGradient id="g2" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#C8F5F2"/><stop offset="100%" stop-color="#7FE8E2"/></linearGradient>
+      <filter id="glow"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    </defs>
+    <rect x="0" y="0" width="${W}" height="${H}" fill="url(#g2)" opacity="0.85"/>
+    <path d="${p1Path}" fill="url(#g1)" opacity="0.85"/>
+    <path d="M${dx+Math.sin(0)*amp},0 ${Array.from({length:Math.ceil(H/4)+1},(_,i)=>i*4).map(y=>`L${dx+Math.sin(y/H*Math.PI*freq)*amp},${y}`).join(' ')}"
+      fill="none" stroke="white" stroke-width="3" opacity="0.9" filter="url(#glow)"/>
+    ${[0.12,0.3,0.5,0.68,0.88].map(t=>{const y=H*t;const x=dx+Math.sin(y/H*Math.PI*freq)*amp;return`<circle cx="${x}" cy="${y}" r="${3+Math.sin(t*8)*1.5}" fill="white" opacity="${0.35+Math.sin(t*6)*0.25}"/>`;}).join('')}
+    ${stick(Math.max(18,dx*0.4),H*0.5,'#FF6B9D',waveAnim<38)}
+    ${stick(Math.min(W-18,dx+(W-dx)*0.6),H*0.5,'#4ECDC4',waveAnim>62)}
+    <text x="${Math.max(26,dx/2)}" y="${H-28}" text-anchor="middle" font-family="Fredoka One,cursive" font-size="20" fill="#FF6B9D" opacity="0.85">${p1Score}</text>
+    <text x="${Math.min(W-26,dx+(W-dx)/2)}" y="${H-28}" text-anchor="middle" font-family="Fredoka One,cursive" font-size="20" fill="#2da89f" opacity="0.85">${p2Score}</text>
+  `;
+}
+function stick(cx,cy,color,win){const s=win?1.1:0.88;return`<g transform="translate(${cx},${cy}) scale(${s})"><circle cx="0" cy="-26" r="9" fill="none" stroke="${color}" stroke-width="2.5"/><line x1="0" y1="-17" x2="0" y2="8" stroke="${color}" stroke-width="2.5" stroke-linecap="round"/><line x1="0" y1="-9" x2="${win?-13:-11}" y2="${win?-17:-3}" stroke="${color}" stroke-width="2.5" stroke-linecap="round"/><line x1="0" y1="-9" x2="${win?13:11}" y2="${win?-17:-3}" stroke="${color}" stroke-width="2.5" stroke-linecap="round"/><line x1="0" y1="8" x2="-9" y2="24" stroke="${color}" stroke-width="2.5" stroke-linecap="round"/><line x1="0" y1="8" x2="9" y2="24" stroke="${color}" stroke-width="2.5" stroke-linecap="round"/>${win?`<text x="0" y="-40" text-anchor="middle" font-size="13">🎉</text>`:''}</g>`;}
+
+function updateAdvBanner(){
+  const b=document.getElementById('adv-banner');
+  if(p1Score===p2Score)b.textContent="It's neck and neck! 🔥";
+  else if(p1Score>p2Score)b.textContent=`${p1Name} is pulling ahead! 💪`;
+  else b.textContent=`${p2Name} is pulling ahead! 💪`;
+}
+function updateRoundInfo(){
+  document.getElementById('round-info').textContent=`Q${p1QIdx+1} vs Q${p2QIdx+1} of ${questionCount}`;
+}
+
+// ===================== CHEERS / PARTICLES =====================
+function showCheer(player){
+  const panel=document.getElementById(`panel${player}`);
+  const rect=panel.getBoundingClientRect();
+  const c=document.createElement('div');c.className='cheer-bubble';
+  c.textContent=CHEERS[Math.floor(Math.random()*CHEERS.length)];
+  c.style.left=(rect.left+rect.width/2-70)+'px';c.style.top=(rect.top+rect.height/3)+'px';
+  document.body.appendChild(c);setTimeout(()=>c.remove(),1400);
+}
+function showParticles(player){
+  const panel=document.getElementById(`panel${player}`);
+  const rect=panel.getBoundingClientRect();
+  for(let i=0;i<10;i++){
+    const p=document.createElement('div');p.className='emoji-particle';
+    p.textContent=PARTICLES[Math.floor(Math.random()*PARTICLES.length)];
+    const x=rect.left+rect.width/2,y=rect.top+rect.height/3;
+    p.style.left=x+'px';p.style.top=y+'px';
+    const angle=Math.random()*360,dist=70+Math.random()*70;
+    p.style.setProperty('--tx',Math.cos(angle*Math.PI/180)*dist+'px');
+    p.style.setProperty('--ty',Math.sin(angle*Math.PI/180)*dist+'px');
+    document.body.appendChild(p);setTimeout(()=>p.remove(),1200);
+  }
+}
+
+// ===================== END =====================
+function checkEnd(){if(!p1Done||!p2Done)return;setTimeout(showEndScreen,800);}
+function showEndScreen(){
+  document.getElementById('end-p1-pts').textContent=p1Score;
+  document.getElementById('end-p2-pts').textContent=p2Score;
+  let winner,trophy,subtitle;
+  if(p1Score>p2Score){winner=p1Name;trophy='🏆';subtitle=`Congratulations, ${p1Name}! Brilliant chemistry! 🧪`;}
+  else if(p2Score>p1Score){winner=p2Name;trophy='🏆';subtitle=`Congratulations, ${p2Name}! Brilliant chemistry! 🧪`;}
+  else{winner="It's a Tie!";trophy='🤝';subtitle="You're both chemistry champions! 🧪";}
+  document.getElementById('end-trophy').textContent=trophy;
+  document.getElementById('end-winner').textContent=winner;
+  document.getElementById('end-subtitle').textContent=subtitle;
+  document.getElementById('end-screen').style.display='flex';
+  launchConfetti();
+}
+function launchConfetti(){
+  const cols=['#FF6B9D','#4ECDC4','#FFE66D','#6C5CE7','#A8E6CF','#fd79a8'];
+  for(let i=0;i<80;i++){
+    const c=document.createElement('div');c.className='confetti-piece';
+    c.style.left=Math.random()*100+'vw';c.style.top='-20px';
+    c.style.background=cols[Math.floor(Math.random()*cols.length)];
+    c.style.borderRadius=Math.random()>0.5?'50%':'2px';
+    c.style.transform=`rotate(${Math.random()*360}deg)`;
+    c.style.animationDuration=(2+Math.random()*3)+'s';
+    c.style.animationDelay=Math.random()*2+'s';
+    document.body.appendChild(c);setTimeout(()=>c.remove(),6000);
+  }
+}
+function playAgain(){
+  document.getElementById('end-screen').style.display='none';
+  document.getElementById('game-screen').style.display='none';
+  document.getElementById('setup-screen').style.display='flex';
+}
+drawWave();
+</script>
+</body>
+</html>
